@@ -1,5 +1,5 @@
 {
-  "name": "http",
+  "name": "docker-manager",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -13,15 +13,10 @@
   "license": "ISC",
   "dependencies": {
     "@repo/db": "workspace:*",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
     "redis": "^5.10.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@repo/types": "workspace:*"
+    "@repo/types": "workspace: *"
   }
 }
