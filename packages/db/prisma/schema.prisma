@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -15,12 +14,34 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
+  id                String      @id @default(uuid())
+  email             String      @unique
   password          String
   name              String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
   provider          String?
   providerAccountId String?
+  recordings        Recording[]
+}
+
+model Recording {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  link          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  fileName      String?
+  status        RecordingStatus @default(PENDING)
+  errorMetadata Json?
+}
+
+enum RecordingStatus {
+  PENDING
+  ASKING_TO_JOIN
+  JOINED
+  COMPLETED
+  FAILED
+  TIMEOUT
 }
