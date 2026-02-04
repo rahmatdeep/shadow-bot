@@ -36,6 +36,7 @@ model Recording {
   status        RecordingStatus @default(PENDING)
   errorMetadata Json?
   transcript    Transcript?
+  chatSessions  ChatSession[]
 }
 
 model Transcript {
@@ -48,6 +49,25 @@ model Transcript {
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
   status                   TranscriptStatus @default(PENDING)
+}
+
+model ChatSession {
+  id          String        @id @default(uuid())
+  recordingId String
+  recording   Recording     @relation(fields: [recordingId], references: [id])
+  title       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  messages    ChatMessage[]
+}
+
+model ChatMessage {
+  id            String      @id @default(uuid())
+  chatSessionId String
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
+  role          ChatRole
+  content       String
+  createdAt     DateTime    @default(now())
 }
 
 enum RecordingStatus {
@@ -63,4 +83,9 @@ enum TranscriptStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
 }
