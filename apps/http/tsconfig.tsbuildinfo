@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/routes/v1/chat.ts","./src/routes/v1/index.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/routes/v1/chat.ts","./src/routes/v1/index.ts","./src/routes/v1/meeting.ts"],"version":"5.9.2"}

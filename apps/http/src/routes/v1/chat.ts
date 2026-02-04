@@ -5,11 +5,37 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 const chatRouter: Router = Router();
 
+// Helper to verify recording ownership
+async function verifyRecordingOwnership(recordingId: string, userId: string): Promise<boolean> {
+    const recording = await prisma.recording.findUnique({
+        where: { id: recordingId },
+        select: { userId: true },
+    });
+    return recording?.userId === userId;
+}
+
+// Helper to verify chat ownership (via recording)
+async function verifyChatOwnership(chatId: string, userId: string): Promise<boolean> {
+    const chatSession = await prisma.chatSession.findUnique({
+        where: { id: chatId },
+        include: { recording: { select: { userId: true } } },
+    });
+    return chatSession?.recording.userId === userId;
+}
+
 // Start a new chat session for a recording
 chatRouter.post("/start", async (req, res) => {
+    const userId = (req as any).userId;
     const { recordingId } = req.body;
+
     if (!recordingId) {
         res.status(400).json({ error: "Missing recordingId" });
+        return;
+    }
+
+    // Verify user owns this recording
+    if (!(await verifyRecordingOwnership(recordingId, userId))) {
+        res.status(403).json({ error: "Access denied" });
         return;
     }
 
@@ -27,9 +53,17 @@ chatRouter.post("/start", async (req, res) => {
 
 // Send a message and get AI response with full history context
 chatRouter.post("/message", async (req, res) => {
+    const userId = (req as any).userId;
     const { chatId, message } = req.body;
+
     if (!chatId || !message) {
         res.status(400).json({ error: "Missing chatId or message" });
+        return;
+    }
+
+    // Verify user owns this chat
+    if (!(await verifyChatOwnership(chatId, userId))) {
+        res.status(403).json({ error: "Access denied" });
         return;
     }
 
@@ -114,14 +148,14 @@ chatRouter.post("/message", async (req, res) => {
     }
 });
 
-// Get all chat sessions (filter by recordingId or userId via recording)
+// Get all chat sessions for current user
 chatRouter.get("/", async (req, res) => {
-    const { userId, recordingId } = req.query;
+    const userId = (req as any).userId;
+    const { recordingId } = req.query;
 
     try {
-        const where: any = {};
+        const where: any = { recording: { userId } };
         if (recordingId) where.recordingId = recordingId;
-        if (userId) where.recording = { userId };
 
         const chatSessions = await prisma.chatSession.findMany({
             where,
@@ -131,7 +165,7 @@ chatRouter.get("/", async (req, res) => {
                     orderBy: { createdAt: "desc" },
                     take: 1,
                 },
-                recording: { select: { link: true, userId: true } },
+                recording: { select: { link: true } },
             },
         });
 
@@ -154,7 +188,14 @@ chatRouter.get("/", async (req, res) => {
 
 // Get a specific chat with all messages
 chatRouter.get("/:chatId", async (req, res) => {
+    const userId = (req as any).userId;
     const { chatId } = req.params;
+
+    // Verify user owns this chat
+    if (!(await verifyChatOwnership(chatId, userId))) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+    }
 
     try {
         const chatSession = await prisma.chatSession.findUnique({
