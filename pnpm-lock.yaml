@@ -82,6 +82,12 @@ importers:
 
   apps/http:
     dependencies:
+      '@langchain/core':
+        specifier: ^1.1.18
+        version: 1.1.18
+      '@langchain/google-genai':
+        specifier: ^2.1.14
+        version: 2.1.14(@langchain/core@1.1.18)
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db

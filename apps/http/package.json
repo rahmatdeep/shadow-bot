@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@langchain/core": "^1.1.18",
+    "@langchain/google-genai": "^2.1.14",
     "@repo/db": "workspace:*",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -19,9 +21,9 @@
     "redis": "^5.10.0"
   },
   "devDependencies": {
+    "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@repo/types": "workspace:*"
+    "@types/express": "^5.0.6"
   }
 }
