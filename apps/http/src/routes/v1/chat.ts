@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "@repo/db/client";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatStartSchema, ChatMessageSchema } from "@repo/types";
 
 const chatRouter: Router = Router();
 
@@ -25,13 +26,14 @@ async function verifyChatOwnership(chatId: string, userId: string): Promise<bool
 
 // Start a new chat session for a recording
 chatRouter.post("/start", async (req, res) => {
-    const userId = (req as any).userId;
-    const { recordingId } = req.body;
-
-    if (!recordingId) {
-        res.status(400).json({ error: "Missing recordingId" });
+    const parsed = ChatStartSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
         return;
     }
+
+    const userId = (req as any).userId;
+    const { recordingId } = parsed.data;
 
     // Verify user owns this recording
     if (!(await verifyRecordingOwnership(recordingId, userId))) {
@@ -53,13 +55,14 @@ chatRouter.post("/start", async (req, res) => {
 
 // Send a message and get AI response with full history context
 chatRouter.post("/message", async (req, res) => {
-    const userId = (req as any).userId;
-    const { chatId, message } = req.body;
-
-    if (!chatId || !message) {
-        res.status(400).json({ error: "Missing chatId or message" });
+    const parsed = ChatMessageSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
         return;
     }
+
+    const userId = (req as any).userId;
+    const { chatId, message } = parsed.data;
 
     // Verify user owns this chat
     if (!(await verifyChatOwnership(chatId, userId))) {
@@ -155,7 +158,10 @@ chatRouter.get("/", async (req, res) => {
 
     try {
         const where: any = { recording: { userId } };
-        if (recordingId) where.recordingId = recordingId;
+        // Validating recordingId if provided in query
+        if (recordingId && typeof recordingId === "string") {
+            where.recordingId = recordingId;
+        }
 
         const chatSessions = await prisma.chatSession.findMany({
             where,

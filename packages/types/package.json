@@ -12,7 +12,10 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
   },
-  "exports":{
+  "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }

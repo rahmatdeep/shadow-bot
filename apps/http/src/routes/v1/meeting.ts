@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createClient } from "redis";
-import { JoinMeetingPayload } from "@repo/types";
+import { JoinMeetingPayload, JoinMeetingSchema } from "@repo/types";
 import { prisma } from "@repo/db/client";
 
 const redisClient = createClient();
@@ -143,20 +143,31 @@ meetingRouter.get("/:id/status", async (req, res) => {
 
 // Join a meeting
 meetingRouter.post("/join", async (req, res) => {
+    const parsed = JoinMeetingSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
+        return;
+    }
+
     const userId = (req as any).userId;
-    const { link } = req.body;
+    const { link } = parsed.data;
 
-    const recording = await prisma.recording.create({
-        data: {
-            userId,
-            link,
-        },
-    });
+    try {
+        const recording = await prisma.recording.create({
+            data: {
+                userId,
+                link,
+            },
+        });
 
-    const payload: JoinMeetingPayload = { userId, link, recordingId: recording.id };
+        const payload: JoinMeetingPayload = { userId, link, recordingId: recording.id };
 
-    await redisClient.rPush("join_meet_queue", JSON.stringify(payload));
-    res.json({ status: "queued", recordingId: recording.id });
+        await redisClient.rPush("join_meet_queue", JSON.stringify(payload));
+        res.json({ status: "queued", recordingId: recording.id });
+    } catch (error) {
+        console.error("Join meeting error:", error);
+        res.status(500).json({ error: "Failed to join meeting" });
+    }
 });
 
 export { meetingRouter };

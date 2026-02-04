@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "@repo/db/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { SignupSchema, LoginSchema, GoogleAuthSchema } from "@repo/types";
 
 const authRouter: Router = Router();
 
@@ -9,12 +10,13 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 // Sign up with email/password
 authRouter.post("/signup", async (req, res) => {
-    const { email, password, name } = req.body;
-
-    if (!email || !password || !name) {
-        res.status(400).json({ error: "Missing email, password, or name" });
+    const parsed = SignupSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
         return;
     }
+
+    const { email, password, name } = parsed.data;
 
     try {
         // Check if user already exists
@@ -60,12 +62,13 @@ authRouter.post("/signup", async (req, res) => {
 
 // Login with email/password
 authRouter.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        res.status(400).json({ error: "Missing email or password" });
+    const parsed = LoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
         return;
     }
+
+    const { email, password } = parsed.data;
 
     try {
         // Find user
@@ -113,12 +116,13 @@ authRouter.post("/login", async (req, res) => {
 
 // Google OAuth authentication
 authRouter.post("/google-auth", async (req, res) => {
-    const { email, name, providerId } = req.body;
-
-    if (!email || !name || !providerId) {
-        res.status(400).json({ error: "Missing email, name, or providerId" });
+    const parsed = GoogleAuthSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
         return;
     }
+
+    const { email, name, providerId } = parsed.data;
 
     try {
         // Find or create user
