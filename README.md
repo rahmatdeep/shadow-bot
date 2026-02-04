@@ -7,6 +7,7 @@ An automated, high-fidelity Google Meet recording, transcription, and summarizat
 -   **Isolated Recording**: Spins up ephemeral Docker containers for each meeting, ensuring isolated browser sessions and reliable capture.
 -   **Streaming AI Transcription**: Uses ElevenLabs Scribe v2 with async streaming (`createReadStream`) for memory-efficient, high-fidelity speech-to-text.
 -   **Smart Summarization**: Automatically generates titles and bulleted summaries with timestamps using Google Gemini.
+-   **Chat with Transcript**: Ask questions about your meetings (e.g., "What was the budget decision?") and get answers based on the full transcript using Gemini's 1M token window.
 -   **Distributed Architecture**: Decoupled services (HTTP, Docker Manager, Transcribe Service) communicate via Redis for high scalability.
 -   **Unified Monorepo**: Built with Turborepo and `pnpm` for efficient workspace management.
 
@@ -50,9 +51,10 @@ This project is a Turborepo monorepo:
     ```
 
 2.  Configure Environment:
-    Create `.env` files for each service based on the provided `.env.example` files.
-    -   `packages/db/.env`: `DATABASE_URL`
+    Create `.env` files for each service.
+    -   `packages/db/.env`: `DATABASE_URL` (Required **only** here; apps inherit the client)
     -   `apps/transcribe-service/.env`: `ELEVENLABS_API_KEY`, `GEMINI_API_KEY`
+    -   `apps/http/.env`: `GEMINI_API_KEY`
 
 3.  Initialize Database:
     ```bash
@@ -73,14 +75,24 @@ pnpm --filter docker-manager run dev
 pnpm --filter transcribe-service run dev
 ```
 
-## 🧪 Triggering a Recording
+## 🧪 API Usage
 
-To start a recording session via the API:
-
+### 1. Trigger a Recording
 ```bash
 curl -X POST http://localhost:3005/api/v1/join-meeting \
      -H "Content-Type: application/json" \
      -d '{"link": "https://meet.google.com/your-meet-id"}'
+```
+
+### 2. Chat with Transcript
+Ask questions about a specific recording:
+```bash
+curl -X POST http://localhost:3005/api/v1/chat \
+     -H "Content-Type: application/json" \
+     -d '{
+       "recordingId": "YOUR_RECORDING_ID",
+       "message": "What were the key action items?"
+     }'
 ```
 
 ---
