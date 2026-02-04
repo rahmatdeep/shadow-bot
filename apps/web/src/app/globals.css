@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cream & Terracotta Light Theme */
+
+  /* Backgrounds - Cream/Beige */
+  --color-cream-50: #fefcf3;
+  --color-cream-100: #faf8f1;
+  --color-cream-200: #f5f3e8;
+  --color-cream-300: #eeede9;
+
+  /* Primary - Terracotta */
+  --color-terra-900: #8b3a2f;
+  --color-terra-800: #a84a3d;
+  --color-terra-700: #c45a4a;
+  --color-terra-600: #d4634a;
+  --color-terra-500: #e07a5f;
+  --color-terra-400: #e89580;
+
+  /* Text - Brown */
+  --color-brown-900: #3d2817;
+  --color-brown-800: #5c3d2e;
+  --color-brown-700: #7a5548;
+  --color-brown-600: #8b6f5f;
+  --color-brown-500: #a08978;
+  --color-brown-400: #b5a393;
+}
