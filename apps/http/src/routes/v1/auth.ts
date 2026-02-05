@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 authRouter.post("/signup", async (req, res) => {
     const parsed = SignupSchema.safeParse(req.body);
     if (!parsed.success) {
-        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
+        res.status(400).json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors });
         return;
     }
 
@@ -64,7 +64,7 @@ authRouter.post("/signup", async (req, res) => {
 authRouter.post("/login", async (req, res) => {
     const parsed = LoginSchema.safeParse(req.body);
     if (!parsed.success) {
-        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
+        res.status(400).json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors });
         return;
     }
 
@@ -118,7 +118,7 @@ authRouter.post("/login", async (req, res) => {
 authRouter.post("/google-auth", async (req, res) => {
     const parsed = GoogleAuthSchema.safeParse(req.body);
     if (!parsed.success) {
-        res.status(400).json({ error: "Invalid input", details: parsed.error.format() });
+        res.status(400).json({ error: "Invalid input", details: parsed.error.flatten().fieldErrors });
         return;
     }
 

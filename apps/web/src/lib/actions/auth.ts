@@ -1,9 +1,7 @@
 "use server";
 
-import { LoginSchema, SignupSchema } from "types";
-import axios from "axios";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { authApi } from "@/lib/api/auth";
+import { LoginSchema, SignupSchema } from "@repo/types";
 
 export async function signupAction(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -14,27 +12,31 @@ export async function signupAction(prevState: any, formData: FormData) {
 
   if (!result.success) {
     return {
+      success: false,
       errors: result.error.flatten().fieldErrors,
-      data: { name, email },
+      name,
+      email,
     };
   }
 
   try {
-    const res = await axios.post(`${API_URL}/auth/signup`, result.data, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await authApi.signup(result.data);
 
     if (res.status === 201) {
       // Return credentials for auto-login on client side
-      return { success: true, email, password };
+      return { success: true, email, password, name };
     } else {
-      return { error: "Signup failed" };
+      return { success: false, error: "Signup failed", name, email };
     }
   } catch (err: any) {
-    if (axios.isAxiosError(err) && err.response) {
-      return { error: err.response.data.error || "Signup failed" };
-    }
-    return { error: "Network Error" };
+    const backendError = err.response?.data;
+    return {
+      success: false,
+      error: backendError?.error || "Signup failed",
+      errors: backendError?.details || null,
+      name,
+      email,
+    };
   }
 }
 
@@ -46,8 +48,9 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   if (!result.success) {
     return {
+      success: false,
       errors: result.error.flatten().fieldErrors,
-      data: { email },
+      email,
     };
   }
 

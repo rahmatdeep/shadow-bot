@@ -40,8 +40,8 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
 
   useEffect(() => {
     if (signupState?.success) {
-      const email = (signupState as any).email;
-      const password = (signupState as any).password;
+      const email = signupState.email;
+      const password = signupState.password;
       if (email && password) {
         setIsAuthenticating(true);
         setAuthError(null);
@@ -50,10 +50,10 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
           password,
           redirect: false,
         }).then((result) => {
-          setIsAuthenticating(false);
           if (result?.ok) {
             router.push("/");
           } else {
+            setIsAuthenticating(false);
             setAuthError(
               result?.error || "Authentication failed. Please try again.",
             );
@@ -65,8 +65,8 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
 
   useEffect(() => {
     if (loginState?.success) {
-      const email = (loginState as any).email;
-      const password = (loginState as any).password;
+      const email = loginState.email;
+      const password = loginState.password;
       if (email && password) {
         setIsAuthenticating(true);
         setAuthError(null);
@@ -75,10 +75,10 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
           password,
           redirect: false,
         }).then((result) => {
-          setIsAuthenticating(false);
           if (result?.ok) {
             router.push("/");
           } else {
+            setIsAuthenticating(false);
             setAuthError(
               result?.error || "Invalid email or password. Please try again.",
             );
@@ -184,11 +184,20 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-600 group-focus-within:text-terra-600 transition-colors" />
                     <input
                       name="name"
-                      defaultValue={(signupState as any)?.data?.name}
+                      defaultValue={(signupState as any)?.name}
                       className="w-full h-14 bg-cream-100 border border-brown-900/10 rounded-xl px-5 pl-12 font-medium text-brown-900 outline-none focus:border-terra-600 focus:ring-2 focus:ring-terra-600/20 transition-all placeholder:text-brown-500"
                       placeholder="John Doe"
                     />
                   </motion.div>
+                  {currentState?.errors?.name && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[10px] font-bold text-red-500 ml-1"
+                    >
+                      {currentState.errors.name[0]}
+                    </motion.p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -207,13 +216,21 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
                   name="email"
                   type="email"
                   defaultValue={
-                    (signupState as any)?.data?.email ||
-                    (loginState as any)?.data?.email
+                    (signupState as any)?.email || (loginState as any)?.email
                   }
                   className="w-full h-14 bg-cream-100 border border-brown-900/10 rounded-xl px-5 pl-12 font-medium text-brown-900 outline-none focus:border-terra-600 focus:ring-2 focus:ring-terra-600/20 transition-all placeholder:text-brown-500"
                   placeholder="john@example.com"
                 />
               </motion.div>
+              {currentState?.errors?.email && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[10px] font-bold text-red-500 ml-1"
+                >
+                  {currentState.errors.email[0]}
+                </motion.p>
+              )}
             </motion.div>
 
             {/* Password Field */}
@@ -245,6 +262,15 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
                   placeholder="••••••••"
                 />
               </motion.div>
+              {currentState?.errors?.password && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[10px] font-bold text-terra-600 ml-1"
+                >
+                  {currentState.errors.password[0]}
+                </motion.p>
+              )}
             </motion.div>
           </div>
 

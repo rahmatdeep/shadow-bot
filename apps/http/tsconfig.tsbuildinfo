@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/middleware/auth.ts","./src/routes/v1/auth.ts","./src/routes/v1/chat.ts","./src/routes/v1/index.ts","./src/routes/v1/meeting.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/__tests__/auth.test.ts","./src/__tests__/chat.test.ts","./src/__tests__/integration.test.ts","./src/__tests__/meeting.test.ts","./src/__tests__/middleware.test.ts","./src/middleware/auth.ts","./src/routes/v1/auth.ts","./src/routes/v1/chat.ts","./src/routes/v1/index.ts","./src/routes/v1/meeting.ts"],"version":"5.9.2"}

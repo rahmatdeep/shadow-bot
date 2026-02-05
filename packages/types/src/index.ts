@@ -3,13 +3,13 @@ import { z } from "zod";
 // Auth
 export const SignupSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(2),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
 });
 
 export const LoginSchema = z.object({
   email: z.string().email(),
-  password: z.string(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const GoogleAuthSchema = z.object({

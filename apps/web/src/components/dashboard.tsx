@@ -15,20 +15,21 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
+import { meetingApi } from "@/lib/api/meeting";
+
 export function Dashboard({ session }: { session: any }) {
   const [meetLink, setMeetLink] = useState("");
   const [botName, setBotName] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
   const [recordings, setRecordings] = useState([]);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const token = session?.accessToken;
 
   useEffect(() => {
-    if (session?.user?.email) {
-      import("../lib/api")
-        .then((mod) => mod.getRecordings(session.user.email))
-        .then(setRecordings);
+    if (token) {
+      meetingApi.getMeetings(token).then(setRecordings);
     }
-  }, [session]);
+  }, [token]);
 
   const [activeBotContainerId, setActiveBotContainerId] = useState<
     string | null
@@ -65,22 +66,18 @@ export function Dashboard({ session }: { session: any }) {
       return;
     }
 
+    if (!token) {
+      showToast("Authentication required", "error");
+      return;
+    }
+
     setIsDeploying(true);
     try {
-      const result = await import("../lib/api").then((mod) =>
-        mod.startBot(
-          meetLink,
-          botName || "Shadow NoteTaker",
-          session.user.email,
-        ),
-      );
-      if (result && result.containerId) {
-        setActiveBotContainerId(result.containerId);
-        setIsJoining(true);
-        setTimeout(() => {
-          setIsJoining(false);
-          showToast("Bot joined the meeting");
-        }, 6000);
+      const result = await meetingApi.joinMeeting(meetLink, token);
+      if (result && result.recordingId) {
+        showToast("Bot join request queued");
+        // Refresh recordings
+        meetingApi.getMeetings(token).then(setRecordings);
       }
       setMeetLink("");
       setLinkError(null);
@@ -93,17 +90,8 @@ export function Dashboard({ session }: { session: any }) {
   }
 
   async function handleStopBot() {
-    if (!activeBotContainerId) return;
-    try {
-      await import("../lib/api").then((mod) =>
-        mod.stopBot(activeBotContainerId),
-      );
-      setActiveBotContainerId(null);
-      showToast("Bot left the meeting");
-    } catch (e) {
-      console.error(e);
-      showToast("Failed to stop bot", "error");
-    }
+    // Stop bot functionality not currently supported by backend meeting routes
+    showToast("Stop bot not implemented in backend", "error");
   }
 
   return (
@@ -346,20 +334,20 @@ export function Dashboard({ session }: { session: any }) {
                   {/* Recording Thumbnail */}
                   <div className="aspect-video bg-cream-100 rounded-lg flex items-center justify-center relative overflow-hidden group border border-brown-900/5">
                     <div className="absolute inset-0 bg-linear-to-br from-terra-500/10 to-terra-700/5" />
-                    {!rec.deletedAt && (
+                    {rec.status === "COMPLETED" && (
                       <motion.a
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.filePath}`}
+                        href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.fileName}`}
                         target="_blank"
                         className="relative z-10 w-12 h-12 rounded-full bg-terra-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                       >
                         <Play className="w-6 h-6 text-white ml-1" />
                       </motion.a>
                     )}
-                    {rec.deletedAt && (
+                    {rec.status === "FAILED" && (
                       <div className="relative z-10 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-600 uppercase">
-                        Expired
+                        Failed
                       </div>
                     )}
                   </div>
@@ -368,22 +356,36 @@ export function Dashboard({ session }: { session: any }) {
                   <div className="space-y-3">
                     <div>
                       <h3 className="text-lg font-bold text-brown-900 truncate">
-                        {rec.botName}
+                        Meeting {rec.id.substring(0, 8)}
                       </h3>
                       <p className="text-xs text-brown-600">
                         {new Date(rec.createdAt).toLocaleString()}
                       </p>
                     </div>
 
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          rec.status === "COMPLETED"
+                            ? "bg-green-100 text-green-700"
+                            : rec.status === "FAILED"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {rec.status}
+                      </span>
+                    </div>
+
                     <p
-                      className={`text-sm truncate ${rec.deletedAt ? "text-brown-500 line-through" : "text-brown-700"}`}
+                      className={`text-sm truncate ${rec.status === "FAILED" ? "text-brown-500 line-through" : "text-brown-700"}`}
                     >
-                      {rec.meetUrl}
+                      {rec.link}
                     </p>
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-2">
-                      {rec.deletedAt ? (
+                      {rec.status !== "COMPLETED" ? (
                         <button
                           disabled
                           className="flex-1 px-3 py-2 bg-cream-100 border border-brown-900/10 text-brown-500 rounded-lg text-xs font-semibold cursor-not-allowed"
@@ -394,7 +396,7 @@ export function Dashboard({ session }: { session: any }) {
                         <motion.a
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.filePath}`}
+                          href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.fileName}`}
                           target="_blank"
                           className="flex-1 px-3 py-2 bg-cream-100 border border-brown-900/10 text-brown-900 rounded-lg text-xs font-semibold hover:bg-cream-200 transition-all inline-flex items-center justify-center gap-1"
                         >
@@ -402,14 +404,14 @@ export function Dashboard({ session }: { session: any }) {
                         </motion.a>
                       )}
                       <button
-                        disabled
-                        className="flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 cursor-not-allowed"
+                        disabled={!rec.hasTranscript}
+                        className={`flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 ${!rec.hasTranscript ? "cursor-not-allowed opacity-50" : "hover:bg-cream-100 text-brown-900"}`}
                       >
                         <FileText className="w-4 h-4" /> Transcript
                       </button>
                       <button
-                        disabled
-                        className="flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 cursor-not-allowed"
+                        disabled={!rec.summary}
+                        className={`flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 ${!rec.summary ? "cursor-not-allowed opacity-50" : "hover:bg-cream-100 text-brown-900"}`}
                       >
                         <Sparkles className="w-4 h-4" /> Summary
                       </button>

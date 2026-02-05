@@ -1,10 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import axios from "axios";
+import { authApi } from "@/lib/api/auth";
 import { AuthOptions } from "next-auth";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -18,22 +16,17 @@ export const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await axios.post(`${API_URL}/auth/login`, credentials, {
-            headers: { "Content-Type": "application/json" },
-          });
+          const res = await authApi.login(credentials);
 
           if (res.status === 200 && res.data.user) {
             return { ...res.data.user, token: res.data.token };
           }
           return null;
         } catch (error: any) {
-          if (axios.isAxiosError(error) && error.response) {
-            console.error("Auth error details:", error.response.data);
-            throw new Error(
-              error.response.data.error || "Authentication failed",
-            );
-          }
-          console.error("Auth error:", error);
+          console.error(
+            "Auth error details:",
+            error.response?.data || error.message,
+          );
           return null;
         }
       },
@@ -47,7 +40,7 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
-          const res = await axios.post(`${API_URL}/auth/google-auth`, {
+          const res = await authApi.googleAuth({
             email: user.email,
             name: user.name,
             providerId: user.id,
