@@ -9,7 +9,7 @@ dotenv.config();
 export class DockerService {
     private docker: Docker;
     private readonly IMAGE_NAME = "rahmatdeep/gmeet-recorder:latest";
-    private readonly RECORDINGS_HOST_PATH = "/Users/rahmatdeep/repos/projects/shadow-bot/recordings";
+    private readonly RECORDINGS_HOST_PATH = path.resolve(__dirname, "..", "..", "..", "recordings");
     private readonly MAX_CONCURRENT_CONTAINERS = parseInt(process.env.MAX_CONCURRENT_CONTAINERS || "2", 10);
 
     constructor() {
