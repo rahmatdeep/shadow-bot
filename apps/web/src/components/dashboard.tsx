@@ -19,16 +19,25 @@ import { meetingApi } from "@/lib/api/meeting";
 
 export function Dashboard({ session }: { session: any }) {
   const [meetLink, setMeetLink] = useState("");
-  const [botName, setBotName] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
-  const [recordings, setRecordings] = useState([]);
+  const [recordings, setRecordings] = useState<any[]>([]);
   const [linkError, setLinkError] = useState<string | null>(null);
   const token = session?.accessToken;
 
+  // Poll for meeting updates every 5 seconds
   useEffect(() => {
-    if (token) {
-      meetingApi.getMeetings(token).then(setRecordings);
-    }
+    if (!token) return;
+
+    const fetchMeetings = () => {
+      meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
+    };
+
+    // Initial fetch
+    fetchMeetings();
+
+    const intervalId = setInterval(fetchMeetings, 5000);
+
+    return () => clearInterval(intervalId);
   }, [token]);
 
   const [activeBotContainerId, setActiveBotContainerId] = useState<
@@ -76,7 +85,7 @@ export function Dashboard({ session }: { session: any }) {
       const result = await meetingApi.joinMeeting(meetLink, token);
       if (result && result.recordingId) {
         showToast("Bot join request queued");
-        // Refresh recordings
+        // Immediate refresh
         meetingApi.getMeetings(token).then(setRecordings);
       }
       setMeetLink("");
@@ -93,6 +102,22 @@ export function Dashboard({ session }: { session: any }) {
     // Stop bot functionality not currently supported by backend meeting routes
     showToast("Stop bot not implemented in backend", "error");
   }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "bg-green-100 text-green-700";
+      case "FAILED":
+      case "TIMEOUT":
+        return "bg-red-100 text-red-700";
+      case "JOINED":
+        return "bg-blue-100 text-blue-700";
+      case "ASKING_TO_JOIN":
+        return "bg-yellow-100 text-yellow-700";
+      default: // PENDING and others
+        return "bg-gray-100 text-gray-700";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-cream-50 text-brown-900 font-sans selection:bg-terra-500/30">
@@ -201,21 +226,6 @@ export function Dashboard({ session }: { session: any }) {
                   </AnimatePresence>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-900">
-                    Bot Name (Optional)
-                  </label>
-                  <div className="relative">
-                    <Bot className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-600" />
-                    <input
-                      value={botName}
-                      onChange={(e) => setBotName(e.target.value)}
-                      className="w-full h-14 bg-cream-100 border border-brown-900/10 rounded-xl px-5 pl-12 focus:border-terra-600 outline-none transition-all placeholder:text-brown-500 font-medium text-brown-900"
-                      placeholder="Shadow NoteTaker"
-                    />
-                  </div>
-                </div>
-
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -236,7 +246,9 @@ export function Dashboard({ session }: { session: any }) {
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isDeploying ? (
-                    "Launching..."
+                    <>
+                      Launching... <Sparkles className="w-4 h-4 animate-spin" />
+                    </>
                   ) : isJoining ? (
                     "Joining Meeting..."
                   ) : activeBotContainerId ? (
@@ -251,7 +263,7 @@ export function Dashboard({ session }: { session: any }) {
             </motion.div>
           </motion.div>
 
-          {/* Right Column - Stats & Recent */}
+          {/* Right Column - Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -356,7 +368,7 @@ export function Dashboard({ session }: { session: any }) {
                   <div className="space-y-3">
                     <div>
                       <h3 className="text-lg font-bold text-brown-900 truncate">
-                        Meeting {rec.id.substring(0, 8)}
+                        Meeting #{rec.id.substring(0, 8)}
                       </h3>
                       <p className="text-xs text-brown-600">
                         {new Date(rec.createdAt).toLocaleString()}
@@ -365,15 +377,9 @@ export function Dashboard({ session }: { session: any }) {
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          rec.status === "COMPLETED"
-                            ? "bg-green-100 text-green-700"
-                            : rec.status === "FAILED"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusColor(rec.status)}`}
                       >
-                        {rec.status}
+                        {rec.status.replace(/_/g, " ")}
                       </span>
                     </div>
 
