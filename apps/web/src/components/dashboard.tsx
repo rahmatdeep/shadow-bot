@@ -22,28 +22,44 @@ export function Dashboard({ session }: { session: any }) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [recordings, setRecordings] = useState<any[]>([]);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [activeBotContainerId, setActiveBotContainerId] = useState<
+    string | null
+  >(null);
+  const [isJoining, setIsJoining] = useState(false);
   const token = session?.accessToken;
 
   // Poll for meeting updates every 5 seconds
+  // Initial fetch on mount
   useEffect(() => {
-    if (!token) return;
+    if (token) {
+      meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
+    }
+  }, [token]);
+
+  // Poll for meeting updates ONLY if active bot exists
+  useEffect(() => {
+    if (!token || !activeBotContainerId) return;
 
     const fetchMeetings = () => {
       meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
     };
 
-    // Initial fetch
-    fetchMeetings();
-
     const intervalId = setInterval(fetchMeetings, 5000);
-
     return () => clearInterval(intervalId);
-  }, [token]);
+  }, [token, activeBotContainerId]);
 
-  const [activeBotContainerId, setActiveBotContainerId] = useState<
-    string | null
-  >(null);
-  const [isJoining, setIsJoining] = useState(false);
+  // Derive active bot status from recordings
+  useEffect(() => {
+    const activeRecording = recordings.find((r) =>
+      ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.status),
+    );
+    setActiveBotContainerId(activeRecording ? activeRecording.id : null);
+    setIsJoining(
+      activeRecording
+        ? ["PENDING", "ASKING_TO_JOIN"].includes(activeRecording.status)
+        : false,
+    );
+  }, [recordings]);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -70,6 +86,11 @@ export function Dashboard({ session }: { session: any }) {
   };
 
   async function handleInvite() {
+    if (activeBotContainerId) {
+      showToast("Only one active bot allowed at a time", "error");
+      return;
+    }
+
     if (!validateMeetLink(meetLink)) {
       setLinkError("Please enter a valid Google Meet link");
       return;
@@ -203,12 +224,19 @@ export function Dashboard({ session }: { session: any }) {
                     <input
                       value={meetLink}
                       onChange={(e) => handleMeetLinkChange(e.target.value)}
+                      disabled={!!activeBotContainerId}
                       className={`w-full h-14 bg-cream-100 border rounded-xl px-5 pl-12 outline-none transition-all placeholder:text-brown-500 font-medium text-brown-900 ${
                         linkError
                           ? "border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                          : "border-brown-900/10 focus:border-terra-600 focus:ring-2 focus:ring-terra-600/20"
+                          : activeBotContainerId
+                            ? "border-brown-900/10 opacity-60 cursor-not-allowed"
+                            : "border-brown-900/10 focus:border-terra-600 focus:ring-2 focus:ring-terra-600/20"
                       }`}
-                      placeholder="https://meet.google.com/abc-defg-hij"
+                      placeholder={
+                        activeBotContainerId
+                          ? "Existing bot active..."
+                          : "https://meet.google.com/xxx-yyyy-zzz"
+                      }
                     />
                   </div>
                   <AnimatePresence>
@@ -223,36 +251,52 @@ export function Dashboard({ session }: { session: any }) {
                         {linkError}
                       </motion.p>
                     )}
+                    {activeBotContainerId && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-terra-600 font-medium flex items-center gap-1"
+                      >
+                        <AlertCircle className="w-3 h-3" />
+                        Only one active bot allowed at a time.
+                      </motion.p>
+                    )}
                   </AnimatePresence>
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: activeBotContainerId ? 1 : 1.02 }}
+                  whileTap={{ scale: activeBotContainerId ? 1 : 0.98 }}
                   onClick={
-                    activeBotContainerId && !isJoining
-                      ? handleStopBot
-                      : handleInvite
+                    activeBotContainerId && isJoining
+                      ? undefined // Disable click during joining
+                      : activeBotContainerId
+                        ? handleStopBot
+                        : handleInvite
                   }
                   disabled={
+                    (activeBotContainerId && isJoining) || // Disable completely while joining
                     (!meetLink && !activeBotContainerId) ||
-                    isDeploying ||
-                    isJoining
+                    isDeploying
                   }
                   className={`w-full h-14 rounded-xl text-base font-bold transition-all shadow-lg inline-flex items-center justify-center gap-2 ${
                     activeBotContainerId && !isJoining
                       ? "bg-linear-to-r from-terra-800 to-terra-900 text-white hover:opacity-90"
-                      : "bg-linear-to-r from-terra-600 to-terra-700 text-white hover:opacity-90"
+                      : activeBotContainerId && isJoining
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                        : "bg-linear-to-r from-terra-600 to-terra-700 text-white hover:opacity-90"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isDeploying ? (
                     <>
                       Launching... <Sparkles className="w-4 h-4 animate-spin" />
                     </>
-                  ) : isJoining ? (
-                    "Joining Meeting..."
                   ) : activeBotContainerId ? (
-                    "Leave Meeting"
+                    isJoining ? (
+                      "Bot Joining..."
+                    ) : (
+                      "Stop Active Bot"
+                    )
                   ) : (
                     <>
                       Join Meeting <ArrowRight className="w-4 h-4" />
