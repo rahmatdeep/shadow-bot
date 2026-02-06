@@ -47,6 +47,14 @@ export interface TranscriptionPayload {
   fileName: string;
 }
 
+// Meeting Summary
+export const MeetingSummarySchema = z.object({
+  title: z.string().describe("Catchy and concise title of the meeting"),
+  goal: z.string().describe("Main objective or primary goal discussed"),
+  keyPoints: z.array(z.string()).describe("A list of the most important points covered"),
+  actionItems: z.array(z.string()).describe("List of clear tasks or follow-up items with owners if mentioned"),
+});
+
 // Inferred Types
 export type SignupInput = z.infer<typeof SignupSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
@@ -54,3 +62,4 @@ export type GoogleAuthInput = z.infer<typeof GoogleAuthSchema>;
 export type JoinMeetingInput = z.infer<typeof JoinMeetingSchema>;
 export type ChatStartInput = z.infer<typeof ChatStartSchema>;
 export type ChatMessageInput = z.infer<typeof ChatMessageSchema>;
+export type MeetingSummary = z.infer<typeof MeetingSummarySchema>;

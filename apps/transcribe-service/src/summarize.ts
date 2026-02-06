@@ -1,5 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { MeetingSummarySchema } from "@repo/types";
 import "dotenv/config";
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -14,19 +15,25 @@ const model = new ChatGoogleGenerativeAI({
 
 export async function summarizeMeeting(transcript: string) {
     const prompt = ChatPromptTemplate.fromMessages([
-        ["system", "You are an expert meeting assistant. Analyze the transcript and provide a clear title/goal and key points."],
-        ["user", "Analyze the following meeting transcript and provide:\n1. The Title/Goal of the meeting.\n2. Key points discussed.\n\nTranscript:\n{transcript}"]
+        ["system", "You are an expert meeting assistant. Analyze the transcript and extract structured information."],
+        ["user", "Analyze the following meeting transcript and extract the title, goal, key points, and action items.\n\nTranscript:\n{transcript}"]
     ]);
 
-    const chain = prompt.pipe(model);
+    const structuredModel = model.withStructuredOutput(MeetingSummarySchema);
+    const chain = prompt.pipe(structuredModel);
 
     try {
         const response = await chain.invoke({
             transcript: transcript,
         });
-        return response.content;
+        return response;
     } catch (error) {
         console.error("Error summarizing meeting:", error);
-        return "Failed to summarize meeting.";
+        return {
+            title: "Meeting Summary",
+            goal: "Failed to summarize meeting.",
+            keyPoints: [],
+            actionItems: [],
+        };
     }
 }

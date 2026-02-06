@@ -51,7 +51,7 @@ describe('Meeting Routes', () => {
                     fileName: 'recording.mp4',
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                    transcript: { status: 'COMPLETED', summary: 'Meeting summary' },
+                    transcript: { status: 'COMPLETED', summary: { title: 'Test', goal: 'Test Goal', keyPoints: [], actionItems: [] } },
                 },
             ];
 
@@ -94,7 +94,7 @@ describe('Meeting Routes', () => {
                     status: 'COMPLETED',
                     transcript: 'Full transcript',
                     transcriptWithTimeStamps: 'Timestamped transcript',
-                    summary: 'Summary',
+                    summary: { title: 'Test', goal: 'Test Goal', keyPoints: [], actionItems: [] },
                 },
                 chatSessions: [],
             };
@@ -178,7 +178,7 @@ describe('Meeting Routes', () => {
                 status: 'COMPLETED',
                 transcript: 'Full transcript',
                 transcriptWithTimeStamps: 'Timestamped transcript',
-                summary: 'Summary',
+                summary: { title: 'Test', goal: 'Test Goal', keyPoints: ['Point 1'], actionItems: ['Item 1'] },
                 updatedAt: new Date(),
             };
 
@@ -192,7 +192,7 @@ describe('Meeting Routes', () => {
                 recordingId: 'rec-1',
                 status: 'COMPLETED',
                 transcript: 'Full transcript',
-                summary: 'Summary',
+                summary: { title: 'Test', goal: 'Test Goal' },
             });
         });
 

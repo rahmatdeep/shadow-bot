@@ -45,7 +45,7 @@ model Transcript {
   recording                Recording        @relation(fields: [recordingId], references: [id])
   transcript               String?
   transcriptWithTimeStamps String?
-  summary                  String?
+  summary                  Json?
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
   status                   TranscriptStatus @default(PENDING)

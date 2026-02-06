@@ -86,7 +86,7 @@ async function processTranscription(payload: TranscriptionPayload) {
 
         console.log("\n--- Meeting Summary ---\n");
         const summary = await summarizeMeeting(plainTranscript);
-        console.log(summary);
+        console.log(JSON.stringify(summary, null, 2));
 
         // Update with results
         await prisma.transcript.update({
@@ -94,7 +94,7 @@ async function processTranscription(payload: TranscriptionPayload) {
             data: {
                 transcript: plainTranscript,
                 transcriptWithTimeStamps: transcriptWithTimestamps,
-                summary: summary as string,
+                summary: summary as any, // Cast to any to satisfy Json type if needed
                 status: "COMPLETED"
             }
         });

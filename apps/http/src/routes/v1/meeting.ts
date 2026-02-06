@@ -42,7 +42,7 @@ meetingRouter.get("/", async (req, res) => {
       status: rec.status,
       fileName: rec.fileName,
       hasTranscript: rec.transcript?.status === "COMPLETED",
-      summary: rec.transcript?.summary?.substring(0, 200) || null,
+      summary: rec.transcript?.summary || null,
       createdAt: rec.createdAt,
       updatedAt: rec.updatedAt,
     }));

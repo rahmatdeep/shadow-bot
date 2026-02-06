@@ -19,7 +19,8 @@
     "@langchain/google-genai": "^2.1.14",
     "@repo/db": "workspace:*",
     "dotenv": "^17.2.3",
-    "redis": "^5.10.0"
+    "redis": "^5.10.0",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "build": "tsc -b",
