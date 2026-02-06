@@ -30,7 +30,7 @@ export class DockerService {
     /**
      * Starts a new recorder container for the given meeting.
      */
-    async startRecorder(payload: JoinMeetingPayload) {
+    async startRecorder(payload: JoinMeetingPayload, fileName: string) {
         console.log(`Starting recorder for link: ${payload.link} (User: ${payload.userId})`);
 
         let containerName = "unknown";
@@ -68,10 +68,15 @@ export class DockerService {
             // Pull the image if it doesn't exist locally
             await this.ensureImagePulled();
 
+            const cmd = ["bun", "meet.ts", payload.link, "Shadow Bot", duration];
+            if (fileName) {
+                cmd.push("--filename", fileName);
+            }
+
             const container = await this.docker.createContainer({
                 Image: this.IMAGE_NAME,
                 name: containerName,
-                Cmd: ["bun", "meet.ts", payload.link, "Shadow Bot", duration],
+                Cmd: cmd,
                 Labels: {
                     "shadow-bot.user-id": payload.userId,
                 },

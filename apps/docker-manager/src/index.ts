@@ -2,6 +2,7 @@ import { createClient } from "redis";
 import type { JoinMeetingPayload, TranscriptionPayload } from "@repo/types";
 import { DockerService } from "./dockerService";
 import { prisma } from "@repo/db/client";
+import crypto from "crypto";
 
 const redisClient = createClient();
 const redisListener = createClient();
@@ -67,8 +68,10 @@ export async function listenQueue() {
         const MAX_RETRIES = 3;
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
           try {
-            const meetingId = payload.link.split("/").pop()?.split("?")[0] || "unknown";
-            const container = await dockerService.startRecorder(payload);
+            const fileNameUuid = crypto.randomUUID();
+            const fileName = `${fileNameUuid}.webm`;
+
+            const container = await dockerService.startRecorder(payload, fileNameUuid);
 
             if (!container) {
               throw new Error("Failed to start recorder: No container returned.");
@@ -77,7 +80,7 @@ export async function listenQueue() {
             await prisma.recording.update({
               where: { id: payload.recordingId },
               data: {
-                fileName: `${meetingId}.webm`,
+                fileName,
               },
             });
 
@@ -126,7 +129,7 @@ export async function listenQueue() {
               if (exitCode === 0 && !isTimedOut) {
                 const transcriptionPayload: TranscriptionPayload = {
                   recordingId: payload.recordingId,
-                  fileName: `${meetingId}.webm`
+                  fileName
                 };
                 await redisClient.rPush(TRANSCRIPTION_QUEUE, JSON.stringify(transcriptionPayload));
                 console.log(`Pushed to ${TRANSCRIPTION_QUEUE} for recording ${payload.recordingId}`);
