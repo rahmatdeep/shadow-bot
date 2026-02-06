@@ -93,12 +93,12 @@ meetingRouter.get("/:id", async (req, res) => {
       updatedAt: recording.updatedAt,
       transcript: recording.transcript
         ? {
-            status: recording.transcript.status,
-            transcript: recording.transcript.transcript,
-            transcriptWithTimeStamps:
-              recording.transcript.transcriptWithTimeStamps,
-            summary: recording.transcript.summary,
-          }
+          status: recording.transcript.status,
+          transcript: recording.transcript.transcript,
+          transcriptWithTimeStamps:
+            recording.transcript.transcriptWithTimeStamps,
+          summary: recording.transcript.summary,
+        }
         : null,
       recentChats: recording.chatSessions,
     });
@@ -142,6 +142,41 @@ meetingRouter.get("/:id/status", async (req, res) => {
   } catch (error) {
     console.error("Error fetching status:", error);
     res.status(500).json({ error: "Failed to fetch status" });
+  }
+});
+
+// Get meeting transcript and summary
+meetingRouter.get("/:id/transcript", async (req, res) => {
+  const userId = (req as any).userId;
+  const { id } = req.params;
+
+  // Verify user owns this recording
+  if (!(await verifyRecordingOwnership(id, userId))) {
+    res.status(403).json({ error: "Access denied" });
+    return;
+  }
+
+  try {
+    const transcript = await prisma.transcript.findUnique({
+      where: { recordingId: id },
+    });
+
+    if (!transcript) {
+      res.status(404).json({ error: "Transcript not found" });
+      return;
+    }
+
+    res.json({
+      recordingId: transcript.recordingId,
+      status: transcript.status,
+      transcript: transcript.transcript,
+      transcriptWithTimeStamps: transcript.transcriptWithTimeStamps,
+      summary: transcript.summary,
+      updatedAt: transcript.updatedAt,
+    });
+  } catch (error) {
+    console.error("Error fetching transcript:", error);
+    res.status(500).json({ error: "Failed to fetch transcript" });
   }
 });
 
