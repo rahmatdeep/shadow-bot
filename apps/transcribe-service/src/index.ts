@@ -61,10 +61,14 @@ async function processTranscription(payload: TranscriptionPayload) {
         const transcription = await getTranscription(fullPath);
 
         if (!transcription) {
-            console.warn(`No transcription generated for ${recordingId} (possibly empty file). skipping.`);
+            const reason = `No transcription generated for ${recordingId} (possibly empty file or file not found).`;
+            console.warn(reason);
             await prisma.transcript.update({
                 where: { recordingId },
-                data: { status: "FAILED" }
+                data: {
+                    status: "FAILED",
+                    failureReason: reason
+                }
             });
             return;
         }
@@ -101,11 +105,15 @@ async function processTranscription(payload: TranscriptionPayload) {
 
         console.log(`Successfully processed and saved transcription for ${recordingId}`);
 
-    } catch (error) {
-        console.error(`Error processing transcription for ${recordingId}:`, error);
+    } catch (error: any) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Error processing transcription for ${recordingId}:`, errorMessage);
         await prisma.transcript.update({
             where: { recordingId },
-            data: { status: "FAILED" }
+            data: {
+                status: "FAILED",
+                failureReason: errorMessage
+            }
         }).catch((err: any) => console.error("Failed to update status to FAILED:", err));
     }
 }

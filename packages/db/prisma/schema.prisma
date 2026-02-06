@@ -49,6 +49,7 @@ model Transcript {
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
   status                   TranscriptStatus @default(PENDING)
+  failureReason            String?
 }
 
 model ChatSession {
