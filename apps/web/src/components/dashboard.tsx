@@ -19,22 +19,41 @@ import { meetingApi } from "@/lib/api/meeting";
 
 export function Dashboard({ session }: { session: any }) {
   const [meetLink, setMeetLink] = useState("");
-  const [botName, setBotName] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
-  const [recordings, setRecordings] = useState([]);
+  const [recordings, setRecordings] = useState<any[]>([]);
   const [linkError, setLinkError] = useState<string | null>(null);
-  const token = session?.accessToken;
-
-  useEffect(() => {
-    if (token) {
-      meetingApi.getMeetings(token).then(setRecordings);
-    }
-  }, [token]);
-
   const [activeBotContainerId, setActiveBotContainerId] = useState<
     string | null
   >(null);
-  const [isJoining, setIsJoining] = useState(false);
+  const token = session?.accessToken;
+
+  // Poll for meeting updates every 5 seconds
+  // Initial fetch on mount
+  useEffect(() => {
+    if (token) {
+      meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
+    }
+  }, [token]);
+
+  // Poll for meeting updates ONLY if active bot exists
+  useEffect(() => {
+    if (!token || !activeBotContainerId) return;
+
+    const fetchMeetings = () => {
+      meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
+    };
+
+    const intervalId = setInterval(fetchMeetings, 5000);
+    return () => clearInterval(intervalId);
+  }, [token, activeBotContainerId]);
+
+  // Derive active bot status from recordings
+  useEffect(() => {
+    const activeRecording = recordings.find((r) =>
+      ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.status),
+    );
+    setActiveBotContainerId(activeRecording ? activeRecording.id : null);
+  }, [recordings]);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -61,6 +80,11 @@ export function Dashboard({ session }: { session: any }) {
   };
 
   async function handleInvite() {
+    if (activeBotContainerId) {
+      showToast("Only one active bot allowed at a time", "error");
+      return;
+    }
+
     if (!validateMeetLink(meetLink)) {
       setLinkError("Please enter a valid Google Meet link");
       return;
@@ -76,7 +100,7 @@ export function Dashboard({ session }: { session: any }) {
       const result = await meetingApi.joinMeeting(meetLink, token);
       if (result && result.recordingId) {
         showToast("Bot join request queued");
-        // Refresh recordings
+        // Immediate refresh
         meetingApi.getMeetings(token).then(setRecordings);
       }
       setMeetLink("");
@@ -94,232 +118,169 @@ export function Dashboard({ session }: { session: any }) {
     showToast("Stop bot not implemented in backend", "error");
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "bg-green-100 text-green-700";
+      case "FAILED":
+      case "TIMEOUT":
+        return "bg-red-100 text-red-700";
+      case "JOINED":
+        return "bg-blue-100 text-blue-700";
+      case "ASKING_TO_JOIN":
+        return "bg-yellow-100 text-yellow-700";
+      default: // PENDING and others
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cream-50 text-brown-900 font-sans selection:bg-terra-500/30">
-      {/* Top Navigation */}
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="fixed top-0 w-full z-50 border-b border-brown-900/10 bg-cream-50/80 backdrop-blur-md"
+    <div className="min-h-screen bg-[#FDFBF7] text-brown-900 font-sans selection:bg-terra-500/30 relative overflow-x-hidden">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-terra-200/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-cream-200/40 rounded-full blur-[100px]" />
+      </div>
+
+      {/* Top Right User Pill */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed top-6 right-6 z-50 flex items-center gap-3"
       >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-terra-600 to-terra-800 flex items-center justify-center shadow-lg">
-              <Bot className="text-white w-5 h-5" />
-            </div>
-            <span className="text-lg font-extrabold tracking-tight text-brown-900">
-              Shadow Bot
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-brown-600 font-medium">
-                Logged in as
-              </span>
-              <span className="text-sm font-semibold text-brown-900">
-                {session.user?.email}
-              </span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => signOut()}
-              className="px-4 py-2 text-sm font-semibold text-brown-700 hover:text-brown-900 transition-colors inline-flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" /> Sign Out
-            </motion.button>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* Dashboard Main */}
-      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-3 gap-12">
-          {/* Left Column - New Recording */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-2 space-y-8"
+        <div className="bg-white/80 backdrop-blur-md border border-brown-900/5 shadow-sm rounded-full pl-4 pr-1 py-1 flex items-center gap-3">
+          <span className="text-xs font-semibold text-brown-600">
+            {session.user?.email}
+          </span>
+          <button
+            onClick={() => signOut()}
+            className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center text-brown-600 hover:bg-terra-100 hover:text-terra-700 transition-colors"
           >
-            <header className="space-y-2">
-              <motion.h1
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-4xl font-extrabold tracking-tight text-brown-900"
-              >
-                New Recording
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-brown-700"
-              >
-                Invite Shadow Bot to your next meeting
-              </motion.p>
-            </header>
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white border border-brown-900/10 rounded-xl p-6 space-y-6 shadow-md"
-            >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-900">
-                    Meeting Link
-                  </label>
-                  <div className="relative">
-                    <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-600" />
-                    <input
-                      value={meetLink}
-                      onChange={(e) => handleMeetLinkChange(e.target.value)}
-                      className={`w-full h-14 bg-cream-100 border rounded-xl px-5 pl-12 outline-none transition-all placeholder:text-brown-500 font-medium text-brown-900 ${
-                        linkError
-                          ? "border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500/20"
-                          : "border-brown-900/10 focus:border-terra-600 focus:ring-2 focus:ring-terra-600/20"
-                      }`}
-                      placeholder="https://meet.google.com/abc-defg-hij"
-                    />
-                  </div>
-                  <AnimatePresence>
-                    {linkError && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className="text-xs text-red-600 font-medium flex items-center gap-1"
-                      >
-                        <AlertCircle className="w-3 h-3" />
-                        {linkError}
-                      </motion.p>
+      <main className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-24">
+        {/* Hero Section */}
+        <div className="text-center max-w-3xl mx-auto mb-24 space-y-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="space-y-4"
+          >
+            <h1 className="text-6xl md:text-7xl font-black text-brown-900 tracking-tighter leading-[1.1]">
+              Ready to{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-terra-600 to-terra-500">
+                join?
+              </span>
+            </h1>
+            <p className="text-xl text-brown-500 font-medium max-w-lg mx-auto leading-relaxed">
+              Paste your meeting link below and let Shadow Bot determine the
+              rest.
+            </p>
+          </motion.div>
+
+          {/* Main Input Component */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative max-w-2xl mx-auto group"
+          >
+            <div
+              className={`absolute -inset-1 rounded-2xl bg-gradient-to-r from-terra-500/20 to-brown-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${isDeploying ? "opacity-50" : ""}`}
+            />
+
+            <div className="relative bg-white shadow-2xl shadow-brown-900/5 rounded-2xl flex items-center p-2 border border-brown-900/5 focus-within:ring-4 focus-within:ring-terra-500/10 focus-within:border-terra-500/50 transition-all duration-300">
+              <div className="pl-4 pr-3 text-brown-400">
+                <Video className="w-6 h-6" />
+              </div>
+
+              <input
+                value={meetLink}
+                onChange={(e) => handleMeetLinkChange(e.target.value)}
+                disabled={isDeploying} // Only disable if deploying, to match logic but allow edits otherwise
+                className="flex-1 h-14 bg-transparent outline-none text-lg font-medium text-brown-900 placeholder:text-brown-300"
+                placeholder="meet.google.com/xxx-yyyy-zzz"
+              />
+
+              <AnimatePresence>
+                {(meetLink.length > 5 || isDeploying) && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                    onClick={handleInvite}
+                    disabled={isDeploying || !!activeBotContainerId}
+                    className="h-12 px-8 rounded-xl bg-terra-600 text-white font-bold shadow-lg shadow-terra-600/20 hover:bg-terra-700 hover:shadow-terra-600/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ml-2"
+                  >
+                    {isDeploying ? (
+                      <Sparkles className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <ArrowRight className="w-5 h-5" />
                     )}
-                  </AnimatePresence>
-                </div>
+                    <span>{isDeploying ? "Launching" : "Join"}</span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-900">
-                    Bot Name (Optional)
-                  </label>
-                  <div className="relative">
-                    <Bot className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-600" />
-                    <input
-                      value={botName}
-                      onChange={(e) => setBotName(e.target.value)}
-                      className="w-full h-14 bg-cream-100 border border-brown-900/10 rounded-xl px-5 pl-12 focus:border-terra-600 outline-none transition-all placeholder:text-brown-500 font-medium text-brown-900"
-                      placeholder="Shadow NoteTaker"
-                    />
-                  </div>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={
-                    activeBotContainerId && !isJoining
-                      ? handleStopBot
-                      : handleInvite
-                  }
-                  disabled={
-                    (!meetLink && !activeBotContainerId) ||
-                    isDeploying ||
-                    isJoining
-                  }
-                  className={`w-full h-14 rounded-xl text-base font-bold transition-all shadow-lg inline-flex items-center justify-center gap-2 ${
-                    activeBotContainerId && !isJoining
-                      ? "bg-linear-to-r from-terra-800 to-terra-900 text-white hover:opacity-90"
-                      : "bg-linear-to-r from-terra-600 to-terra-700 text-white hover:opacity-90"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {isDeploying ? (
-                    "Launching..."
-                  ) : isJoining ? (
-                    "Joining Meeting..."
-                  ) : activeBotContainerId ? (
-                    "Leave Meeting"
-                  ) : (
-                    <>
-                      Join Meeting <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
+            <div className="absolute top-full left-0 w-full mt-3 flex justify-center">
+              <AnimatePresence>
+                {linkError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-sm font-semibold text-red-500 flex items-center gap-1.5 bg-red-50 px-3 py-1 rounded-full border border-red-100"
+                  >
+                    <AlertCircle className="w-4 h-4" /> {linkError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
 
-          {/* Right Column - Stats & Recent */}
+          {/* Floating Stats */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-4 pt-4"
           >
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              className="bg-white border border-brown-900/10 rounded-xl p-6 space-y-4 shadow-md"
-            >
-              <h3 className="text-sm font-bold text-brown-900 flex items-center gap-2">
-                <Video className="w-4 h-4 text-terra-600" /> Quick Stats
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-brown-900/10">
-                  <span className="text-sm text-brown-700">
-                    Active Recordings
-                  </span>
-                  <span className="text-sm font-bold text-brown-900">
-                    {activeBotContainerId ? 1 : 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-brown-700">Total Saved</span>
-                  <span className="text-sm font-bold text-brown-900">
-                    {recordings.length}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
+            <div className="bg-white/60 backdrop-blur-sm border border-brown-900/5 px-5 py-2 rounded-full shadow-sm text-sm font-medium text-brown-600 flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${activeBotContainerId ? "bg-green-500" : "bg-gray-300"}`}
+              />
+              {activeBotContainerId ? "Bot Busy" : "Bot Idle"}
+            </div>
+            <div className="bg-white/60 backdrop-blur-sm border border-brown-900/5 px-5 py-2 rounded-full shadow-sm text-sm font-medium text-brown-600 flex items-center gap-2">
+              <Video className="w-4 h-4 text-brown-400" />
+              {recordings.length} Recordings Saved
+            </div>
           </motion.div>
         </div>
 
-        {/* Recordings List */}
+        {/* Recordings Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-16 space-y-6"
+          transition={{ delay: 0.6 }}
         >
-          <div className="flex items-center justify-between">
-            <motion.h2
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              className="text-2xl font-extrabold text-brown-900"
-            >
-              Your Recordings
-            </motion.h2>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px bg-brown-900/10 flex-1" />
+            <h2 className="text-brown-400 font-bold uppercase tracking-widest text-xs">
+              Recent History
+            </h2>
+            <div className="h-px bg-brown-900/10 flex-1" />
           </div>
 
           {recordings.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="bg-white border border-brown-900/10 rounded-xl p-12 text-center shadow-md"
-            >
-              <div className="space-y-3">
-                <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center mx-auto">
-                  <Video className="w-8 h-8 text-brown-600" />
-                </div>
-                <p className="text-sm font-medium text-brown-700">
-                  No recordings yet. Start your first meeting!
-                </p>
-              </div>
-            </motion.div>
+            <div className="text-center py-20 opacity-50">
+              <p className="text-brown-500">No recordings yet.</p>
+            </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recordings.map((rec: any, index: number) => (
@@ -327,93 +288,78 @@ export function Dashboard({ session }: { session: any }) {
                   key={rec.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.8 + index * 0.1 }}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  className="bg-white border border-brown-900/10 rounded-xl p-6 space-y-4 hover:border-terra-600 hover:shadow-lg transition-all"
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                  whileHover={{ scale: 1.01, y: -2 }}
+                  className="bg-white rounded-2xl border border-brown-900/5 p-6 shadow-sm hover:shadow-xl hover:shadow-brown-900/5 transition-all duration-300 group"
                 >
-                  {/* Recording Thumbnail */}
-                  <div className="aspect-video bg-cream-100 rounded-lg flex items-center justify-center relative overflow-hidden group border border-brown-900/5">
-                    <div className="absolute inset-0 bg-linear-to-br from-terra-500/10 to-terra-700/5" />
-                    {rec.status === "COMPLETED" && (
-                      <motion.a
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.fileName}`}
-                        target="_blank"
-                        className="relative z-10 w-12 h-12 rounded-full bg-terra-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                      >
-                        <Play className="w-6 h-6 text-white ml-1" />
-                      </motion.a>
-                    )}
-                    {rec.status === "FAILED" && (
-                      <div className="relative z-10 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-600 uppercase">
-                        Failed
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Recording Info */}
-                  <div className="space-y-3">
+                  <div className="flex flex-col h-full justify-between">
                     <div>
-                      <h3 className="text-lg font-bold text-brown-900 truncate">
-                        Meeting {rec.id.substring(0, 8)}
-                      </h3>
-                      <p className="text-xs text-brown-600">
-                        {new Date(rec.createdAt).toLocaleString()}
-                      </p>
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-cream-50 flex items-center justify-center text-brown-600 group-hover:bg-terra-50 group-hover:text-terra-600 transition-colors">
+                          <Video className="w-6 h-6" />
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                            rec.status === "COMPLETED"
+                              ? "bg-green-50 text-green-700 border-green-100"
+                              : rec.status === "FAILED"
+                                ? "bg-red-50 text-red-700 border-red-100"
+                                : "bg-blue-50 text-blue-700 border-blue-100"
+                          }`}
+                        >
+                          {rec.status}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 mb-6">
+                        <h3 className="text-xl font-bold text-brown-900 truncate">
+                          Meeting #{rec.id.substring(0, 6)}
+                        </h3>
+                        <p className="text-xs font-semibold text-brown-400 uppercase tracking-wide">
+                          {new Date(rec.createdAt).toLocaleDateString(
+                            undefined,
+                            {
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </p>
+                        <p className="text-sm text-brown-500 truncate pt-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                          {rec.link}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          rec.status === "COMPLETED"
-                            ? "bg-green-100 text-green-700"
-                            : rec.status === "FAILED"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {rec.status}
-                      </span>
-                    </div>
-
-                    <p
-                      className={`text-sm truncate ${rec.status === "FAILED" ? "text-brown-500 line-through" : "text-brown-700"}`}
-                    >
-                      {rec.link}
-                    </p>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 pt-2">
+                    <div className="pt-6 border-t border-brown-900/5 flex gap-3">
                       {rec.status !== "COMPLETED" ? (
                         <button
                           disabled
-                          className="flex-1 px-3 py-2 bg-cream-100 border border-brown-900/10 text-brown-500 rounded-lg text-xs font-semibold cursor-not-allowed"
+                          className="flex-1 py-3 rounded-xl bg-gray-50 text-gray-400 text-sm font-bold cursor-not-allowed"
                         >
-                          <Video className="w-4 h-4 inline mr-1" /> Watch
+                          Watch
                         </button>
                       ) : (
-                        <motion.a
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                        <a
                           href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.fileName}`}
                           target="_blank"
-                          className="flex-1 px-3 py-2 bg-cream-100 border border-brown-900/10 text-brown-900 rounded-lg text-xs font-semibold hover:bg-cream-200 transition-all inline-flex items-center justify-center gap-1"
+                          className="flex-1 py-3 rounded-xl bg-terra-600 text-white text-sm font-bold shadow-lg shadow-brown-900/10 hover:shadow-terra-600/20 hover:scale-105 transition-all text-center flex items-center justify-center gap-2"
                         >
-                          <Video className="w-4 h-4" /> Watch
-                        </motion.a>
+                          <Play className="w-3.5 h-3.5" /> Watch
+                        </a>
                       )}
                       <button
                         disabled={!rec.hasTranscript}
-                        className={`flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 ${!rec.hasTranscript ? "cursor-not-allowed opacity-50" : "hover:bg-cream-100 text-brown-900"}`}
+                        className="w-12 flex items-center justify-center rounded-xl bg-cream-50 text-brown-600 hover:bg-cream-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <FileText className="w-4 h-4" /> Transcript
+                        <FileText className="w-5 h-5" />
                       </button>
                       <button
                         disabled={!rec.summary}
-                        className={`flex-1 px-3 py-2 bg-transparent text-brown-500 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 ${!rec.summary ? "cursor-not-allowed opacity-50" : "hover:bg-cream-100 text-brown-900"}`}
+                        className="w-12 flex items-center justify-center rounded-xl bg-cream-50 text-brown-600 hover:bg-cream-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Sparkles className="w-4 h-4" /> Summary
+                        <Sparkles className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -428,25 +374,20 @@ export function Dashboard({ session }: { session: any }) {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed top-6 right-6 z-50"
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
           >
             <div
-              className={`flex items-start gap-3 px-5 py-4 rounded-xl shadow-2xl border backdrop-blur-sm ${
+              className={`flex items-center gap-3 px-6 py-3 rounded-full shadow-2xl border ${
                 toast.type === "error"
-                  ? "bg-red-50/95 border-red-200 text-red-800"
-                  : "bg-green-50/95 border-green-200 text-green-800"
+                  ? "bg-red-600 text-white border-red-500"
+                  : "bg-brown-900 text-white border-brown-800"
               }`}
             >
-              {toast.type === "error" ? (
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-              )}
-              <p className="text-sm font-semibold">{toast.message}</p>
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <p className="text-sm font-bold tracking-wide">{toast.message}</p>
             </div>
           </motion.div>
         )}
