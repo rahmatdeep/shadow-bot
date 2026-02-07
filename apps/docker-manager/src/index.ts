@@ -3,6 +3,8 @@ import type { JoinMeetingPayload, TranscriptionPayload } from "@repo/types";
 import { DockerService } from "./dockerService";
 import { prisma } from "@repo/db/client";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
 
 const redisClient = createClient();
 const redisListener = createClient();
@@ -85,6 +87,7 @@ export async function listenQueue() {
             });
 
             let isTimedOut = false;
+            let isInvalidLink = false;
 
             // Monitor logs for status changes
             const logStream = await container.logs({
@@ -95,7 +98,10 @@ export async function listenQueue() {
 
             logStream.on("data", async (chunk: Buffer) => {
               const log = chunk.toString("utf8");
-              if (
+              if (log.includes("ERROR: Invalid meeting ID")) {
+                isInvalidLink = true;
+                console.log(`Detected invalid meeting link for recording ${payload.recordingId}`);
+              } else if (
                 log.includes("Bot is still in the 'Asking to join' state") ||
                 (log.includes("Clicked join button") && log.includes("Ask to join"))
               ) {
@@ -118,15 +124,36 @@ export async function listenQueue() {
               const exitCode = result.StatusCode;
               console.log(`Container for recording ${payload.recordingId} exited with code ${exitCode}`);
 
+              let finalStatus: "COMPLETED" | "FAILED" | "TIMEOUT" = exitCode === 0 ? "COMPLETED" : "FAILED";
+              if (isTimedOut) finalStatus = "TIMEOUT";
+              if (isInvalidLink) finalStatus = "FAILED";
+
               await prisma.recording.update({
                 where: { id: payload.recordingId },
                 data: {
-                  status: isTimedOut ? "TIMEOUT" : (exitCode === 0 ? "COMPLETED" : "FAILED"),
-                  ...(exitCode !== 0 && { errorMetadata: JSON.stringify({ exitCode, isTimedOut }) })
+                  status: finalStatus,
+                  ...(isInvalidLink && { fileName: null }),
+                  ...((exitCode !== 0 || isTimedOut || isInvalidLink) && {
+                    errorMetadata: JSON.stringify({
+                      exitCode,
+                      isTimedOut,
+                      isInvalidLink,
+                      error: isInvalidLink ? "Invalid meeting link" : undefined
+                    })
+                  })
                 }
               });
 
-              if (exitCode === 0 && !isTimedOut) {
+              // Clean up file if it's an invalid link
+              if (isInvalidLink) {
+                const filePath = path.join(__dirname, "..", "..", "..", "recordings", fileName);
+                if (fs.existsSync(filePath)) {
+                  console.log(`Deleting invalid recording file: ${filePath}`);
+                  fs.unlinkSync(filePath);
+                }
+              }
+
+              if (exitCode === 0 && !isTimedOut && !isInvalidLink) {
                 const transcriptionPayload: TranscriptionPayload = {
                   recordingId: payload.recordingId,
                   fileName
