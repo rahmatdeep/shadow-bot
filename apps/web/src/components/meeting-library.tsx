@@ -31,41 +31,97 @@ export function MeetingLibrary({ session }: { session: any }) {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    const fetchMeetings = () => {
-      meetingApi
-        .getMeetings(session.accessToken)
-        .then((data) => {
-          if (!isMounted) return;
-          setRecordings(data);
-          setLoading(false);
+    const fetchStatus = () => {
+      // Find the active meeting
+      const activeMeeting = recordings.find(
+        (r: any) =>
+          ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus) ||
+          ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
+      );
 
-          // Only poll if there are active meetings or active processing
-          const hasActive = data.some(
-            (r: any) =>
+      if (activeMeeting) {
+        meetingApi
+          .getStatus(activeMeeting.id, session.accessToken)
+          .then((statusData) => {
+            if (!isMounted) return;
+
+            setRecordings((prev) =>
+              prev.map((r) =>
+                r.id === activeMeeting.id
+                  ? {
+                      ...r,
+                      recordingStatus: statusData.recordingStatus,
+                      transcriptionStatus: statusData.transcriptionStatus,
+                      summaryStatus: statusData.summaryStatus,
+                    }
+                  : r,
+              ),
+            );
+
+            const hasActive =
               ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
-                r.recordingStatus,
+                statusData.recordingStatus,
               ) ||
-              r.transcriptionStatus === "IN_PROGRESS" ||
-              r.summaryStatus === "IN_PROGRESS",
-          );
+              ["PENDING", "IN_PROGRESS"].includes(
+                statusData.transcriptionStatus,
+              ) ||
+              ["PENDING", "IN_PROGRESS"].includes(statusData.summaryStatus);
 
-          if (hasActive) {
-            timeoutId = setTimeout(fetchMeetings, 5000);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          if (isMounted) setLoading(false);
-        });
+            if (hasActive) {
+              timeoutId = setTimeout(fetchStatus, 5000);
+            } else {
+              // Refresh full list once finished
+              meetingApi.getMeetings(session.accessToken).then((data) => {
+                if (isMounted) setRecordings(data);
+              });
+            }
+          })
+          .catch(console.error);
+      } else {
+        // Fallback or initial fetch
+        meetingApi
+          .getMeetings(session.accessToken)
+          .then((data) => {
+            if (!isMounted) return;
+            setRecordings(data);
+            setLoading(false);
+
+            const hasActive = data.some(
+              (r: any) =>
+                ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
+                  r.recordingStatus,
+                ) ||
+                ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+                ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
+            );
+
+            if (hasActive) {
+              timeoutId = setTimeout(fetchStatus, 4000);
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            if (isMounted) setLoading(false);
+          });
+      }
     };
 
-    fetchMeetings();
+    fetchStatus();
 
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [session]);
+  }, [
+    session,
+    recordings.some(
+      (r) =>
+        ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus) ||
+        ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+        ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
+    ),
+  ]);
 
   const [activeTranscriptId, setActiveTranscriptId] = useState<string | null>(
     null,

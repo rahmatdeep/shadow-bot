@@ -30,4 +30,9 @@ export const meetingApi = {
     apiClient
       .get(`/meeting/${id}/transcript`, { token } as any)
       .then((res) => res.data),
+
+  getStatus: (id: string, token: string) =>
+    apiClient
+      .get(`/meeting/${id}/status`, { token } as any)
+      .then((res) => res.data),
 };

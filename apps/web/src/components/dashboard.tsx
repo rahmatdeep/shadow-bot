@@ -28,23 +28,93 @@ export function Dashboard({ session }: { session: any }) {
     string | null
   >(null);
   const [activeRecording, setActiveRecording] = useState<any | null>(null);
+  const [isPolling, setIsPolling] = useState(true);
 
   const token = session?.accessToken;
 
   // Poll for meeting updates
   useEffect(() => {
-    if (!token) return;
+    if (!token || !isPolling) return;
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
 
-    const fetchMeetings = () => {
-      meetingApi.getMeetings(token).then(setRecordings).catch(console.error);
+    const fetchStatus = () => {
+      // If we have an active recording, just poll its status
+      if (activeRecording?.id) {
+        meetingApi
+          .getStatus(activeRecording.id, token)
+          .then((statusData) => {
+            if (!isMounted) return;
+
+            // Update the recordings list with the new status
+            setRecordings((prev) =>
+              prev.map((r) =>
+                r.id === activeRecording.id
+                  ? {
+                      ...r,
+                      recordingStatus: statusData.recordingStatus,
+                      transcriptionStatus: statusData.transcriptionStatus,
+                      summaryStatus: statusData.summaryStatus,
+                    }
+                  : r,
+              ),
+            );
+
+            // Only poll if there are active meetings
+            const hasActive = ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
+              statusData.recordingStatus,
+            );
+
+            if (hasActive) {
+              timeoutId = setTimeout(fetchStatus, 4000);
+            } else {
+              // Once finished, fetch the full list one last time to sync everything (like fileName)
+              meetingApi.getMeetings(token).then((data) => {
+                if (isMounted) {
+                  setRecordings(data);
+                  setIsPolling(false);
+                }
+              });
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            if (isMounted) setIsPolling(false);
+          });
+      } else {
+        // Fallback or initial fetch of full list
+        meetingApi
+          .getMeetings(token)
+          .then((data) => {
+            if (!isMounted) return;
+            setRecordings(data);
+
+            const hasActive = data.some((r: any) =>
+              ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
+                r.recordingStatus,
+              ),
+            );
+
+            if (hasActive) {
+              timeoutId = setTimeout(fetchStatus, 4000);
+            } else {
+              setIsPolling(false);
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            if (isMounted) setIsPolling(false);
+          });
+      }
     };
 
-    // Initial fetch
-    fetchMeetings();
+    fetchStatus();
 
-    const intervalId = setInterval(fetchMeetings, 4000); // Slightly faster polling for responsiveness
-    return () => clearInterval(intervalId);
-  }, [token]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [token, isPolling, activeRecording?.id]);
 
   // Derive active bot status
   useEffect(() => {
@@ -105,7 +175,7 @@ export function Dashboard({ session }: { session: any }) {
       const result = await meetingApi.joinMeeting(validLink, token);
       if (result && result.recordingId) {
         showToast("Bot join request queued");
-        meetingApi.getMeetings(token).then(setRecordings);
+        setIsPolling(true);
       }
       setMeetLink("");
       setLinkError(null);
