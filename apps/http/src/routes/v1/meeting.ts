@@ -39,7 +39,7 @@ meetingRouter.get("/", async (req, res) => {
     const meetings = recordings.map((rec) => ({
       id: rec.id,
       link: rec.link,
-      recordingStatus: rec.status,
+      recordingStatus: rec.status || "PENDING",
       fileName: rec.fileName,
       transcriptionStatus: rec.transcript?.transcriptionStatus || "PENDING",
       summaryStatus: rec.transcript?.summaryStatus || "PENDING",
@@ -86,15 +86,15 @@ meetingRouter.get("/:id", async (req, res) => {
     res.json({
       id: recording.id,
       link: recording.link,
-      recordingStatus: recording.status,
+      recordingStatus: recording.status || "PENDING",
       fileName: recording.fileName,
       recordingError: recording.errorMetadata,
       createdAt: recording.createdAt,
       updatedAt: recording.updatedAt,
       transcript: recording.transcript
         ? {
-          transcriptionStatus: recording.transcript.transcriptionStatus,
-          summaryStatus: recording.transcript.summaryStatus,
+          transcriptionStatus: recording.transcript.transcriptionStatus || "PENDING",
+          summaryStatus: recording.transcript.summaryStatus || "PENDING",
           transcript: recording.transcript.transcript,
           transcriptWithTimeStamps:
             recording.transcript.transcriptWithTimeStamps,
@@ -141,10 +141,10 @@ meetingRouter.get("/:id/status", async (req, res) => {
 
     res.json({
       id: recording.id,
-      recordingStatus: recording.status,
-      transcriptionStatus: recording.transcript?.transcriptionStatus || null,
-      summaryStatus: recording.transcript?.summaryStatus || null,
-      recordingError: recording.errorMetadata,
+      recordingStatus: recording.status || "PENDING",
+      transcriptionStatus: recording.transcript?.transcriptionStatus || "PENDING",
+      summaryStatus: recording.transcript?.summaryStatus || "PENDING",
+      recordingError: recording.errorMetadata || null,
       transcriptOrSummaryError: recording.transcript?.failureReason || null,
     });
   } catch (error) {
@@ -176,12 +176,12 @@ meetingRouter.get("/:id/transcript", async (req, res) => {
 
     res.json({
       recordingId: transcript.recordingId,
-      transcriptionStatus: transcript.transcriptionStatus,
-      summaryStatus: transcript.summaryStatus,
+      transcriptionStatus: transcript.transcriptionStatus || "PENDING",
+      summaryStatus: transcript.summaryStatus || "PENDING",
       transcript: transcript.transcript,
       transcriptWithTimeStamps: transcript.transcriptWithTimeStamps,
       summary: transcript.summary,
-      transcriptOrSummaryError: transcript.failureReason,
+      transcriptOrSummaryError: transcript.failureReason || null,
       updatedAt: transcript.updatedAt,
     });
   } catch (error) {
