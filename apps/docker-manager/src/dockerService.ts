@@ -79,6 +79,7 @@ export class DockerService {
                 Cmd: cmd,
                 Labels: {
                     "shadow-bot.user-id": payload.userId,
+                    "shadow-bot.recording-id": payload.recordingId,
                 },
                 HostConfig: {
                     IpcMode: "host",
@@ -94,6 +95,37 @@ export class DockerService {
             return container;
         } catch (error) {
             console.error(`Failed to start container ${containerName}:`, error);
+            throw error;
+        }
+    }
+
+    async stopRecorder(recordingId: string, userId: string) {
+        console.log(`Stopping recorder for recording: ${recordingId} (User: ${userId})`);
+        try {
+            const containers = await this.docker.listContainers({
+                filters: JSON.stringify({
+                    label: [
+                        `shadow-bot.user-id=${userId}`,
+                        `shadow-bot.recording-id=${recordingId}`,
+                    ],
+                }),
+            });
+
+            if (containers.length === 0) {
+                console.warn(`No active container found for recording ${recordingId} and user ${userId}`);
+                return false;
+            }
+
+            for (const containerInfo of containers) {
+                console.log(`Killing container ${containerInfo.Id}`);
+                const container = this.docker.getContainer(containerInfo.Id);
+                await container.stop();
+                // Note: AutoRemove: true should handle removal if configured in startRecorder
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`Failed to stop recorder for recording ${recordingId}:`, error);
             throw error;
         }
     }

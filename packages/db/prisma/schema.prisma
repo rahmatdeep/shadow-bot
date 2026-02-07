@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -28,47 +22,47 @@ model User {
 model Recording {
   id            String          @id @default(uuid())
   userId        String
-  user          User            @relation(fields: [userId], references: [id])
   link          String
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   fileName      String?
   status        RecordingStatus @default(PENDING)
   errorMetadata Json?
-  transcript    Transcript?
   chatSessions  ChatSession[]
+  user          User            @relation(fields: [userId], references: [id])
+  transcript    Transcript?
 }
 
 model Transcript {
   id                       String           @id @default(uuid())
   recordingId              String           @unique
-  recording                Recording        @relation(fields: [recordingId], references: [id])
   transcript               String?
   transcriptWithTimeStamps String?
-  summary                  Json?
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
   status                   TranscriptStatus @default(PENDING)
+  summary                  Json?
   failureReason            String?
+  recording                Recording        @relation(fields: [recordingId], references: [id])
 }
 
 model ChatSession {
   id          String        @id @default(uuid())
   recordingId String
-  recording   Recording     @relation(fields: [recordingId], references: [id])
   title       String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   messages    ChatMessage[]
+  recording   Recording     @relation(fields: [recordingId], references: [id])
 }
 
 model ChatMessage {
   id            String      @id @default(uuid())
   chatSessionId String
-  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
   role          ChatRole
   content       String
   createdAt     DateTime    @default(now())
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
 }
 
 enum RecordingStatus {
@@ -78,6 +72,7 @@ enum RecordingStatus {
   COMPLETED
   FAILED
   TIMEOUT
+  CANCELLED
 }
 
 enum TranscriptStatus {

@@ -47,6 +47,11 @@ export interface TranscriptionPayload {
   fileName: string;
 }
 
+export interface KillRecorderPayload {
+  recordingId: string;
+  userId: string;
+}
+
 // Meeting Summary
 export const MeetingSummarySchema = z.object({
   title: z.string().describe("Catchy and concise title of the meeting"),

@@ -184,12 +184,10 @@ meetingRouter.get("/:id/transcript", async (req, res) => {
 meetingRouter.post("/join", async (req, res) => {
   const parsed = JoinMeetingSchema.safeParse(req.body);
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid input",
-        details: parsed.error.flatten().fieldErrors,
-      });
+    res.status(400).json({
+      error: "Invalid input",
+      details: parsed.error.flatten().fieldErrors,
+    });
     return;
   }
 
@@ -215,6 +213,50 @@ meetingRouter.post("/join", async (req, res) => {
   } catch (error) {
     console.error("Join meeting error:", error);
     res.status(500).json({ error: "Failed to join meeting" });
+  }
+});
+
+// Stop a recording
+meetingRouter.post("/stop/:id", async (req, res) => {
+  const userId = (req as any).userId;
+  const { id } = req.params;
+
+  // Verify user owns this recording
+  if (!(await verifyRecordingOwnership(id, userId))) {
+    res.status(403).json({ error: "Access denied" });
+    return;
+  }
+
+  try {
+    const recording = await prisma.recording.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+
+    if (!recording) {
+      res.status(404).json({ error: "Meeting not found" });
+      return;
+    }
+
+    if (
+      recording.status !== "JOINED" &&
+      recording.status !== "ASKING_TO_JOIN" &&
+      recording.status !== "PENDING"
+    ) {
+      res.status(400).json({ error: "Recording is not active" });
+      return;
+    }
+
+    const payload = {
+      userId,
+      recordingId: id,
+    };
+
+    await redisClient.rPush("kill_recorder_queue", JSON.stringify(payload));
+    res.json({ message: "Stop request queued" });
+  } catch (error) {
+    console.error("Stop recording error:", error);
+    res.status(500).json({ error: "Failed to stop recording" });
   }
 });
 
