@@ -19,6 +19,8 @@ import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
 import { Clock, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+import { TranscriptViewer } from "./transcript-viewer";
+import { SummaryModal } from "./summary-modal";
 
 export function MeetingLibrary({ session }: { session: any }) {
   const router = useRouter();
@@ -46,6 +48,11 @@ export function MeetingLibrary({ session }: { session: any }) {
     const intervalId = setInterval(fetchMeetings, 5000);
     return () => clearInterval(intervalId);
   }, [session]);
+
+  const [activeTranscriptId, setActiveTranscriptId] = useState<string | null>(
+    null,
+  );
+  const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-primary-500/30 relative flex flex-col">
@@ -259,20 +266,24 @@ export function MeetingLibrary({ session }: { session: any }) {
                     <div className="flex flex-wrap items-center gap-3">
                       {rec.status === "COMPLETED" ? (
                         <>
-                          <div className="flex items-center gap-1.5 group/actions">
-                            <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95">
-                              <MessageSquare className="w-4 h-4 text-primary-500" />
-                              <span>Analyst</span>
-                            </button>
-                            <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95">
-                              <Sparkles className="w-4 h-4 text-primary-500" />
-                              <span>Summary</span>
-                            </button>
-                            <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95">
-                              <FileText className="w-4 h-4 text-primary-500" />
-                              <span>Transcript</span>
-                            </button>
-                          </div>
+                          <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95">
+                            <MessageSquare className="w-4 h-4 text-primary-500" />
+                            <span>Analyst</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveSummaryId(rec.id)}
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95"
+                          >
+                            <Sparkles className="w-4 h-4 text-primary-500" />
+                            <span>Summary</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveTranscriptId(rec.id)}
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95"
+                          >
+                            <FileText className="w-4 h-4 text-primary-500" />
+                            <span>Transcript</span>
+                          </button>
                         </>
                       ) : (
                         <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-secondary-50/50 border border-secondary-200/40">
@@ -290,6 +301,20 @@ export function MeetingLibrary({ session }: { session: any }) {
           </div>
         )}
       </main>
+
+      <TranscriptViewer
+        recordingId={activeTranscriptId}
+        isOpen={!!activeTranscriptId}
+        onClose={() => setActiveTranscriptId(null)}
+        session={session}
+      />
+
+      <SummaryModal
+        recordingId={activeSummaryId}
+        isOpen={!!activeSummaryId}
+        onClose={() => setActiveSummaryId(null)}
+        session={session}
+      />
     </div>
   );
 }
