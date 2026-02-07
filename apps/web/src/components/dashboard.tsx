@@ -11,6 +11,7 @@ import {
   History,
   Activity,
   ArrowUpRight,
+  Text,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -68,7 +69,7 @@ export function Dashboard({ session }: { session: any }) {
 
   const validateMeetLink = (link: string): boolean => {
     const meetRegex =
-      /^https:\/\/meet\.google\.com\/[a-z0-9]{3}-?[a-z0-9]{4}-?[a-z0-9]{3}$/i;
+      /^(https?:\/\/)?meet\.google\.com\/[a-z0-9]{3}-?[a-z0-9]{4}-?[a-z0-9]{3}$/i;
     return meetRegex.test(link.trim());
   };
 
@@ -95,7 +96,12 @@ export function Dashboard({ session }: { session: any }) {
 
     setIsDeploying(true);
     try {
-      const result = await meetingApi.joinMeeting(meetLink, token);
+      let validLink = meetLink.trim();
+      if (!validLink.startsWith("http")) {
+        validLink = `https://${validLink}`;
+      }
+
+      const result = await meetingApi.joinMeeting(validLink, token);
       if (result && result.recordingId) {
         showToast("Bot join request queued");
         meetingApi.getMeetings(token).then(setRecordings);
@@ -182,28 +188,33 @@ export function Dashboard({ session }: { session: any }) {
                 onChange={(e) => handleMeetLinkChange(e.target.value)}
                 disabled={isDeploying}
                 className="flex-1 h-14 bg-transparent outline-none text-lg md:text-xl font-bold text-text-900 placeholder:text-text-200 placeholder:font-bold tracking-tight"
-                placeholder="meet.google.com/abc-defg-hij"
+                placeholder="meet.google.com/xxx-yyyy-zzz"
               />
 
               <AnimatePresence>
                 {(meetLink.length > 5 || isDeploying) && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9, width: 0 }}
-                    animate={{ opacity: 1, scale: 1, width: "auto" }}
-                    exit={{ opacity: 0, scale: 0.9, width: 0 }}
-                    onClick={handleInvite}
-                    disabled={isDeploying || !!activeBotContainerId}
-                    className="h-12 pl-6 pr-8 rounded-xl bg-primary-600 text-white font-bold shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 ml-2 overflow-hidden whitespace-nowrap"
+                  <motion.div
+                    initial={{ width: 0, opacity: 0, marginLeft: 0 }}
+                    animate={{ width: "auto", opacity: 1, marginLeft: 8 }}
+                    exit={{ width: 0, opacity: 0, marginLeft: 0 }}
+                    transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                    className="overflow-hidden"
                   >
-                    {isDeploying ? (
-                      <Sparkles className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="w-5 h-5" />
-                    )}
-                    <span className="text-base tracking-tight">
-                      {isDeploying ? "Launching..." : "Join Now"}
-                    </span>
-                  </motion.button>
+                    <button
+                      onClick={handleInvite}
+                      disabled={isDeploying || !!activeBotContainerId}
+                      className="h-12 pl-6 pr-8 rounded-xl bg-primary-600 text-white font-bold shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 whitespace-nowrap"
+                    >
+                      {isDeploying ? (
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-5 h-5" />
+                      )}
+                      <span className="text-base tracking-tight">
+                        {isDeploying ? "Launching..." : "Join Now"}
+                      </span>
+                    </button>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -227,13 +238,13 @@ export function Dashboard({ session }: { session: any }) {
                     className="flex items-center gap-6 text-text-300 text-xs font-bold uppercase tracking-widest bg-white/50 px-6 py-2 rounded-full border border-white/50"
                   >
                     <span className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3 h-3" /> Fast Deploy
+                      <Text className="w-3 h-3" /> Fast Transcription
                     </span>
                     <span className="flex items-center gap-2">
-                      <Bot className="w-3 h-3" /> Auto-Join
+                      <Bot className="w-3 h-3" /> AI Summary
                     </span>
                     <span className="flex items-center gap-2">
-                      <Sparkles className="w-3 h-3" /> AI Summary
+                      <Sparkles className="w-3 h-3" /> AI Chat
                     </span>
                   </motion.div>
                 )}
@@ -338,26 +349,5 @@ export function Dashboard({ session }: { session: any }) {
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-// Simple icon for the helper text
-function CheckCircle2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
   );
 }

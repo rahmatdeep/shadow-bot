@@ -12,13 +12,12 @@ import {
   Sparkles,
   Play,
   Loader2,
-  GemIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
-import { Clock, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { TranscriptViewer } from "./transcript-viewer";
 import { SummaryModal } from "./summary-modal";
 
@@ -233,7 +232,7 @@ export function MeetingLibrary({ session }: { session: any }) {
                                   className={`w-16 h-16 rounded-2xl flex items-center justify-center border shadow-inner ${statusConfig.bgClass} ${statusConfig.textClass} ${statusConfig.borderClass}`}
                                 >
                                   <statusConfig.icon
-                                    className={`w-8 h-8 ${statusConfig.animate ? "animate-pulse" : ""}`}
+                                    className={`w-8 h-8 ${statusConfig.animationClass || ""}`}
                                   />
                                 </div>
                               )}

@@ -38,4 +38,24 @@
   body {
     @apply bg-secondary-100 text-text-900 selection:bg-primary-500/30;
   }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-text-300 rounded-full cursor-pointer transition-colors duration-200;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-400;
+  }
 }

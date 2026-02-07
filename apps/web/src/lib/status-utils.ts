@@ -23,6 +23,7 @@ interface StatusConfig {
   dotClass: string;
   icon: any;
   animate?: boolean;
+  animationClass?: string;
 }
 
 export function getMeetingStatus(status: string): StatusConfig {
@@ -37,7 +38,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         borderClass: "border-amber-100",
         dotClass: "bg-amber-400",
         icon: Loader2,
-        animate: true,
+        animationClass: "animate-spin",
       };
     case "ASKING_TO_JOIN":
       return {
@@ -47,7 +48,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         borderClass: "border-yellow-100",
         dotClass: "bg-yellow-500",
         icon: Clock,
-        animate: true,
+        animationClass: "animate-pulse",
       };
     case "JOINED":
       return {
@@ -109,7 +110,7 @@ export function getFeatureStatus(status: string): StatusConfig {
         borderClass: "border-amber-100",
         dotClass: "bg-amber-500",
         icon: Loader2,
-        animate: true,
+        animationClass: "animate-spin",
       };
     case "COMPLETED":
       return {
