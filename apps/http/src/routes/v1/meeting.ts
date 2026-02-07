@@ -39,7 +39,7 @@ meetingRouter.get("/", async (req, res) => {
     const meetings = recordings.map((rec) => ({
       id: rec.id,
       link: rec.link,
-      status: rec.status,
+      recordingStatus: rec.status,
       fileName: rec.fileName,
       transcriptionStatus: rec.transcript?.transcriptionStatus || "PENDING",
       summaryStatus: rec.transcript?.summaryStatus || "PENDING",
@@ -86,7 +86,7 @@ meetingRouter.get("/:id", async (req, res) => {
     res.json({
       id: recording.id,
       link: recording.link,
-      status: recording.status,
+      recordingStatus: recording.status,
       fileName: recording.fileName,
       errorMetadata: recording.errorMetadata,
       createdAt: recording.createdAt,
