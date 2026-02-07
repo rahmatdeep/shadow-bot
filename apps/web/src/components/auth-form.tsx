@@ -79,9 +79,14 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
             router.push("/");
           } else {
             setIsAuthenticating(false);
-            setAuthError(
-              result?.error || "Invalid email or password. Please try again.",
-            );
+            const error = result?.error;
+            if (error) {
+              // NextAuth adds "Error: " prefix to thrown errors
+              const message = error.replace(/^Error:\s*/, "");
+              setAuthError(message);
+            } else {
+              setAuthError("Authentication failed. Please try again.");
+            }
           }
         });
       }

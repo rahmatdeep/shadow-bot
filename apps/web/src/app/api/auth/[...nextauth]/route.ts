@@ -27,7 +27,7 @@ export const authOptions: AuthOptions = {
             "Auth error details:",
             error.response?.data || error.message,
           );
-          return null;
+          throw new Error(error.response?.data?.error || error.message);
         }
       },
     }),
