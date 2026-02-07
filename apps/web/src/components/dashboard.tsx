@@ -17,6 +17,7 @@ import Link from "next/link";
 
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
+import { UserProfileBadge } from "./user-profile-badge";
 
 export function Dashboard({ session }: { session: any }) {
   const [meetLink, setMeetLink] = useState("");
@@ -139,7 +140,7 @@ export function Dashboard({ session }: { session: any }) {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-8 sm:top-12 flex items-center gap-2 group cursor-default"
+          className="absolute top-8 sm:top-12 left-6 sm:left-12 flex items-center gap-2 group cursor-default"
         >
           <div className="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:rotate-6 transition-transform">
             <Bot className="w-5 h-5" />
@@ -148,6 +149,11 @@ export function Dashboard({ session }: { session: any }) {
             Shadow Bot
           </span>
         </motion.div>
+
+        {/* User Profile Badge */}
+        <div className="absolute top-8 sm:top-12 right-6 sm:right-12">
+          <UserProfileBadge user={session?.user} />
+        </div>
 
         <div className="w-full max-w-4xl text-center space-y-12">
           {/* Hero Content */}

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Bot,
-  LogOut,
   Video,
   History,
   MessageSquare,
@@ -13,13 +12,13 @@ import {
   Play,
   Loader2,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
 import { Clock, AlertTriangle } from "lucide-react";
 import { TranscriptViewer } from "./transcript-viewer";
 import { SummaryModal } from "./summary-modal";
+import { UserProfileBadge } from "./user-profile-badge";
 
 export function MeetingLibrary({ session }: { session: any }) {
   const router = useRouter();
@@ -113,19 +112,7 @@ export function MeetingLibrary({ session }: { session: any }) {
 
             <div className="h-8 w-px bg-text-900/10 mx-2" />
 
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-black text-text-900 truncate max-w-[120px]">
-                  {session.user?.email.split("@")[0]}
-                </p>
-              </div>
-              <button
-                onClick={() => signOut()}
-                className="w-10 h-10 rounded-xl bg-white border border-text-900/10 flex items-center justify-center text-text-400 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            <UserProfileBadge user={session?.user} />
           </div>
         </div>
       </header>
