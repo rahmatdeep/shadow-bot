@@ -137,10 +137,10 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
+            className="flex items-start gap-3 p-4 bg-white/40 backdrop-blur-md border border-red-500/10 rounded-xl shadow-sm"
           >
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-red-800">{authError}</p>
+            <AlertCircle className="w-5 h-5 text-red-500/60 shrink-0 mt-0.5" />
+            <p className="text-sm font-bold text-red-700/70">{authError}</p>
           </motion.div>
         )}
         {!authError &&
@@ -154,10 +154,10 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
+              className="flex items-start gap-3 p-4 bg-white/40 backdrop-blur-md border border-red-500/10 rounded-xl shadow-sm"
             >
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-red-800">
+              <AlertCircle className="w-5 h-5 text-red-500/60 shrink-0 mt-0.5" />
+              <p className="text-sm font-bold text-red-700/70">
                 {currentState.error}
               </p>
             </motion.div>

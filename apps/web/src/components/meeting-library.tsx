@@ -11,14 +11,19 @@ import {
   Sparkles,
   Play,
   Loader2,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
-import { Clock, AlertTriangle } from "lucide-react";
 import { TranscriptViewer } from "./transcript-viewer";
 import { SummaryModal } from "./summary-modal";
 import { UserProfileBadge } from "./user-profile-badge";
+import { cleanupErrorMessage } from "@/lib/utils/error-utils";
+import { ChatInterface } from "./chat-interface";
+import { chatApi } from "@/lib/api/chat";
 
 export function MeetingLibrary({ session }: { session: any }) {
   const router = useRouter();
@@ -31,46 +36,160 @@ export function MeetingLibrary({ session }: { session: any }) {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
-    const fetchMeetings = () => {
-      meetingApi
-        .getMeetings(session.accessToken)
-        .then((data) => {
-          if (!isMounted) return;
-          setRecordings(data);
-          setLoading(false);
+    const fetchStatus = () => {
+      // Find the active meeting
+      const activeMeeting = recordings.find((r: any) => {
+        // If recording failed or timed out, it's terminal
+        if (["FAILED", "TIMEOUT"].includes(r.recordingStatus)) return false;
 
-          // Only poll if there are active meetings or active processing
-          const hasActive = data.some(
-            (r: any) =>
-              ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
-                r.recordingStatus,
-              ) ||
-              r.transcriptionStatus === "IN_PROGRESS" ||
-              r.summaryStatus === "IN_PROGRESS",
+        // If recording is active, we must poll
+        if (["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus))
+          return true;
+
+        // If recording is completed, only poll if processing is not terminal
+        if (r.recordingStatus === "COMPLETED") {
+          return (
+            ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+            ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus)
           );
+        }
 
-          if (hasActive) {
-            timeoutId = setTimeout(fetchMeetings, 5000);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          if (isMounted) setLoading(false);
-        });
+        return false;
+      });
+
+      if (activeMeeting) {
+        meetingApi
+          .getStatus(activeMeeting.id, session.accessToken)
+          .then((statusData) => {
+            if (!isMounted) return;
+
+            setRecordings((prev) =>
+              prev.map((r) =>
+                r.id === activeMeeting.id
+                  ? {
+                      ...r,
+                      recordingStatus: statusData.recordingStatus,
+                      transcriptionStatus: statusData.transcriptionStatus,
+                      summaryStatus: statusData.summaryStatus,
+                      recordingError: statusData.recordingError,
+                      transcriptOrSummaryError:
+                        statusData.transcriptOrSummaryError,
+                    }
+                  : r,
+              ),
+            );
+
+            const isStillActive =
+              ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
+                statusData.recordingStatus,
+              ) ||
+              (statusData.recordingStatus === "COMPLETED" &&
+                (["PENDING", "IN_PROGRESS"].includes(
+                  statusData.transcriptionStatus,
+                ) ||
+                  ["PENDING", "IN_PROGRESS"].includes(
+                    statusData.summaryStatus,
+                  )));
+
+            if (isStillActive) {
+              timeoutId = setTimeout(fetchStatus, 5000);
+            } else {
+              // Refresh full list once finished
+              meetingApi.getMeetings(session.accessToken).then((data) => {
+                if (isMounted) setRecordings(data);
+              });
+            }
+          })
+          .catch(console.error);
+      } else {
+        // Fallback or initial fetch
+        meetingApi
+          .getMeetings(session.accessToken)
+          .then((data) => {
+            if (!isMounted) return;
+            setRecordings(data);
+            setLoading(false);
+
+            const hasActive = data.some((r: any) => {
+              if (["FAILED", "TIMEOUT"].includes(r.recordingStatus))
+                return false;
+              if (
+                ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
+                  r.recordingStatus,
+                )
+              )
+                return true;
+              return (
+                r.recordingStatus === "COMPLETED" &&
+                (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+                  ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+              );
+            });
+
+            if (hasActive) {
+              timeoutId = setTimeout(fetchStatus, 4000);
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            if (isMounted) setLoading(false);
+          });
+      }
     };
 
-    fetchMeetings();
+    fetchStatus();
 
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [session]);
+  }, [
+    session,
+    recordings.some((r) => {
+      if (["FAILED", "TIMEOUT"].includes(r.recordingStatus)) return false;
+      if (["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus))
+        return true;
+      return (
+        r.recordingStatus === "COMPLETED" &&
+        (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+      );
+    }),
+  ]);
 
   const [activeTranscriptId, setActiveTranscriptId] = useState<string | null>(
     null,
   );
   const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
+
+  const handleChatOpen = async (recordingId: string) => {
+    if (!session?.accessToken) return;
+    setChatLoadingId(recordingId);
+
+    try {
+      // Check for existing chat sessions
+      const chats = await chatApi.getChats(session.accessToken, recordingId);
+
+      if (chats && chats.length > 0) {
+        // Resume the latest chat
+        setActiveChatId(chats[0].id);
+      } else {
+        // Start a new chat
+        const newChat = await chatApi.startChat(
+          recordingId,
+          session.accessToken,
+        );
+        setActiveChatId(newChat.chatId);
+      }
+    } catch (error) {
+      console.error("Failed to open chat:", error);
+      // Ideally show a toast or error message here
+    } finally {
+      setChatLoadingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-primary-500/30 relative flex flex-col">
@@ -275,6 +394,25 @@ export function MeetingLibrary({ session }: { session: any }) {
                                   </div>
                                 )}
                               </div>
+
+                              {rec.recordingError && (
+                                <div className="flex items-center gap-2 text-red-700/70 text-[11px] font-bold bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-red-500/10 w-fit mt-3 shadow-sm">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-red-500/60" />
+                                  <span>
+                                    {cleanupErrorMessage(rec.recordingError)}
+                                  </span>
+                                </div>
+                              )}
+                              {rec.transcriptOrSummaryError && (
+                                <div className="flex items-center gap-2 text-amber-700/70 text-[11px] font-bold bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-500/10 w-fit mt-3 shadow-sm">
+                                  <AlertCircle className="w-3.5 h-3.5 text-amber-500/60" />
+                                  <span>
+                                    {cleanupErrorMessage(
+                                      rec.transcriptOrSummaryError,
+                                    )}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </>
                         );
@@ -286,11 +424,23 @@ export function MeetingLibrary({ session }: { session: any }) {
                       {rec.recordingStatus === "COMPLETED" && (
                         <>
                           <button
-                            disabled={rec.transcriptionStatus !== "COMPLETED"}
+                            disabled={
+                              rec.transcriptionStatus !== "COMPLETED" ||
+                              chatLoadingId === rec.id
+                            }
+                            onClick={() => handleChatOpen(rec.id)}
                             className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-text-100 disabled:hover:text-text-900 disabled:hover:shadow-none"
                           >
-                            <MessageSquare className="w-4 h-4 text-primary-500" />
-                            <span>Analyst</span>
+                            {chatLoadingId === rec.id ? (
+                              <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
+                            ) : (
+                              <MessageSquare className="w-4 h-4 text-primary-500" />
+                            )}
+                            <span>
+                              {chatLoadingId === rec.id
+                                ? "Opening..."
+                                : "Analyst"}
+                            </span>
                           </button>
 
                           {/* Summary Button */}
@@ -305,7 +455,7 @@ export function MeetingLibrary({ session }: { session: any }) {
                           ) : rec.summaryStatus === "FAILED" ? (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-50 border border-red-100 text-red-400 font-bold text-sm cursor-not-allowed opacity-80"
+                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/40 backdrop-blur-md border border-red-500/10 text-red-500/60 font-bold text-sm cursor-not-allowed opacity-80"
                             >
                               <AlertTriangle className="w-4 h-4" />
                               <span>Summary Failed</span>
@@ -332,7 +482,7 @@ export function MeetingLibrary({ session }: { session: any }) {
                           ) : rec.transcriptionStatus === "FAILED" ? (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-50 border border-red-100 text-red-400 font-bold text-sm cursor-not-allowed opacity-80"
+                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/40 backdrop-blur-md border border-red-500/10 text-red-500/60 font-bold text-sm cursor-not-allowed opacity-80"
                             >
                               <AlertTriangle className="w-4 h-4" />
                               <span>Transcript Failed</span>
@@ -369,6 +519,17 @@ export function MeetingLibrary({ session }: { session: any }) {
         isOpen={!!activeSummaryId}
         onClose={() => setActiveSummaryId(null)}
         session={session}
+      />
+
+      <ChatInterface
+        chatId={activeChatId}
+        isOpen={!!activeChatId}
+        onClose={() => setActiveChatId(null)}
+        session={session}
+        title={
+          recordings.find((r) => r.id === activeChatId)?.title ||
+          "Chat with Analyst"
+        }
       />
     </div>
   );

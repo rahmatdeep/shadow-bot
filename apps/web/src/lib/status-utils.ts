@@ -33,19 +33,19 @@ export function getMeetingStatus(status: string): StatusConfig {
     case "PENDING":
       return {
         label: "Initializing",
-        bgClass: "bg-amber-50/50",
-        textClass: "text-amber-600",
-        borderClass: "border-amber-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-amber-700/80",
+        borderClass: "border-amber-500/10",
         dotClass: "bg-amber-400",
         icon: Loader2,
         animationClass: "animate-spin",
       };
     case "ASKING_TO_JOIN":
       return {
-        label: "Requesting to Join...",
-        bgClass: "bg-yellow-50/50",
-        textClass: "text-yellow-700",
-        borderClass: "border-yellow-100",
+        label: "Asking to Join",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-yellow-700/80",
+        borderClass: "border-yellow-500/10",
         dotClass: "bg-yellow-500",
         icon: Clock,
         animationClass: "animate-pulse",
@@ -53,36 +53,36 @@ export function getMeetingStatus(status: string): StatusConfig {
     case "JOINED":
       return {
         label: "Live in Meeting",
-        bgClass: "bg-indigo-50/50",
-        textClass: "text-indigo-700",
-        borderClass: "border-indigo-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-indigo-700/80",
+        borderClass: "border-indigo-500/10",
         dotClass: "bg-indigo-500",
         icon: Video,
       };
     case "COMPLETED":
       return {
         label: "Completed",
-        bgClass: "bg-emerald-50/50",
-        textClass: "text-emerald-700",
-        borderClass: "border-emerald-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-emerald-700/80",
+        borderClass: "border-emerald-500/10",
         dotClass: "bg-emerald-500",
         icon: CheckCircle2,
       };
     case "FAILED":
       return {
         label: "Failed to Join",
-        bgClass: "bg-red-50/50",
-        textClass: "text-red-700",
-        borderClass: "border-red-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-red-700/80",
+        borderClass: "border-red-500/10",
         dotClass: "bg-red-500",
         icon: AlertCircle,
       };
     case "TIMEOUT":
       return {
-        label: "Connection Timeout",
-        bgClass: "bg-orange-50/50",
-        textClass: "text-orange-700",
-        borderClass: "border-orange-100",
+        label: "Timed Out",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-orange-700/80",
+        borderClass: "border-orange-500/10",
         dotClass: "bg-orange-500",
         icon: AlertTriangle,
       };
@@ -105,9 +105,9 @@ export function getFeatureStatus(status: string): StatusConfig {
     case "PENDING":
       return {
         label: "Processing",
-        bgClass: "bg-amber-50/50",
-        textClass: "text-amber-700",
-        borderClass: "border-amber-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-amber-700/80",
+        borderClass: "border-amber-500/10",
         dotClass: "bg-amber-500",
         icon: Loader2,
         animationClass: "animate-spin",
@@ -115,18 +115,18 @@ export function getFeatureStatus(status: string): StatusConfig {
     case "COMPLETED":
       return {
         label: "Ready",
-        bgClass: "bg-emerald-50/50",
-        textClass: "text-emerald-700",
-        borderClass: "border-emerald-100",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-emerald-700/80",
+        borderClass: "border-emerald-500/10",
         dotClass: "bg-emerald-500",
         icon: CheckCircle2,
       };
     case "FAILED":
       return {
-        label: "Generation Failed",
-        bgClass: "bg-red-50/50",
-        textClass: "text-red-700",
-        borderClass: "border-red-100",
+        label: "Failed",
+        bgClass: "bg-white/40 backdrop-blur-md",
+        textClass: "text-red-700/80",
+        borderClass: "border-red-500/10",
         dotClass: "bg-red-500",
         icon: AlertCircle,
       };
