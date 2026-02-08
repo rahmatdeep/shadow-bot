@@ -11,14 +11,17 @@ import {
   Sparkles,
   Play,
   Loader2,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
-import { Clock, AlertTriangle } from "lucide-react";
 import { TranscriptViewer } from "./transcript-viewer";
 import { SummaryModal } from "./summary-modal";
 import { UserProfileBadge } from "./user-profile-badge";
+import { cleanupErrorMessage } from "@/lib/utils/error-utils";
 
 export function MeetingLibrary({ session }: { session: any }) {
   const router = useRouter();
@@ -33,12 +36,24 @@ export function MeetingLibrary({ session }: { session: any }) {
 
     const fetchStatus = () => {
       // Find the active meeting
-      const activeMeeting = recordings.find(
-        (r: any) =>
-          ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus) ||
-          ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
-      );
+      const activeMeeting = recordings.find((r: any) => {
+        // If recording failed or timed out, it's terminal
+        if (["FAILED", "TIMEOUT"].includes(r.recordingStatus)) return false;
+
+        // If recording is active, we must poll
+        if (["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus))
+          return true;
+
+        // If recording is completed, only poll if processing is not terminal
+        if (r.recordingStatus === "COMPLETED") {
+          return (
+            ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+            ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus)
+          );
+        }
+
+        return false;
+      });
 
       if (activeMeeting) {
         meetingApi
@@ -54,21 +69,27 @@ export function MeetingLibrary({ session }: { session: any }) {
                       recordingStatus: statusData.recordingStatus,
                       transcriptionStatus: statusData.transcriptionStatus,
                       summaryStatus: statusData.summaryStatus,
+                      recordingError: statusData.recordingError,
+                      transcriptOrSummaryError:
+                        statusData.transcriptOrSummaryError,
                     }
                   : r,
               ),
             );
 
-            const hasActive =
+            const isStillActive =
               ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
                 statusData.recordingStatus,
               ) ||
-              ["PENDING", "IN_PROGRESS"].includes(
-                statusData.transcriptionStatus,
-              ) ||
-              ["PENDING", "IN_PROGRESS"].includes(statusData.summaryStatus);
+              (statusData.recordingStatus === "COMPLETED" &&
+                (["PENDING", "IN_PROGRESS"].includes(
+                  statusData.transcriptionStatus,
+                ) ||
+                  ["PENDING", "IN_PROGRESS"].includes(
+                    statusData.summaryStatus,
+                  )));
 
-            if (hasActive) {
+            if (isStillActive) {
               timeoutId = setTimeout(fetchStatus, 5000);
             } else {
               // Refresh full list once finished
@@ -87,14 +108,21 @@ export function MeetingLibrary({ session }: { session: any }) {
             setRecordings(data);
             setLoading(false);
 
-            const hasActive = data.some(
-              (r: any) =>
+            const hasActive = data.some((r: any) => {
+              if (["FAILED", "TIMEOUT"].includes(r.recordingStatus))
+                return false;
+              if (
                 ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
                   r.recordingStatus,
-                ) ||
-                ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-                ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
-            );
+                )
+              )
+                return true;
+              return (
+                r.recordingStatus === "COMPLETED" &&
+                (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+                  ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+              );
+            });
 
             if (hasActive) {
               timeoutId = setTimeout(fetchStatus, 4000);
@@ -115,12 +143,16 @@ export function MeetingLibrary({ session }: { session: any }) {
     };
   }, [
     session,
-    recordings.some(
-      (r) =>
-        ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus) ||
-        ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-        ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus),
-    ),
+    recordings.some((r) => {
+      if (["FAILED", "TIMEOUT"].includes(r.recordingStatus)) return false;
+      if (["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus))
+        return true;
+      return (
+        r.recordingStatus === "COMPLETED" &&
+        (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
+          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+      );
+    }),
   ]);
 
   const [activeTranscriptId, setActiveTranscriptId] = useState<string | null>(
@@ -331,6 +363,25 @@ export function MeetingLibrary({ session }: { session: any }) {
                                   </div>
                                 )}
                               </div>
+
+                              {rec.recordingError && (
+                                <div className="flex items-center gap-2 text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-lg border border-red-100 w-fit mt-2">
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <span>
+                                    {cleanupErrorMessage(rec.recordingError)}
+                                  </span>
+                                </div>
+                              )}
+                              {rec.transcriptOrSummaryError && (
+                                <div className="flex items-center gap-2 text-amber-600 text-xs font-bold bg-amber-50 px-3 py-1 rounded-lg border border-amber-100 w-fit mt-2">
+                                  <AlertCircle className="w-3.5 h-3.5" />
+                                  <span>
+                                    {cleanupErrorMessage(
+                                      rec.transcriptOrSummaryError,
+                                    )}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </>
                         );

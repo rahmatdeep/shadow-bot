@@ -18,6 +18,7 @@ import Link from "next/link";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
 import { UserProfileBadge } from "./user-profile-badge";
+import { cleanupErrorMessage } from "@/lib/utils/error-utils";
 
 export function Dashboard({ session }: { session: any }) {
   const [meetLink, setMeetLink] = useState("");
@@ -55,10 +56,23 @@ export function Dashboard({ session }: { session: any }) {
                       recordingStatus: statusData.recordingStatus,
                       transcriptionStatus: statusData.transcriptionStatus,
                       summaryStatus: statusData.summaryStatus,
+                      recordingError: statusData.recordingError,
                     }
                   : r,
               ),
             );
+
+            // Show toast for recording error if it just happened
+            if (
+              statusData.recordingStatus === "FAILED" &&
+              statusData.recordingError &&
+              activeRecording?.recordingStatus !== "FAILED"
+            ) {
+              const displayError = cleanupErrorMessage(
+                statusData.recordingError,
+              );
+              showToast(displayError || "Unknown recording error", "error");
+            }
 
             // Only poll if there are active meetings
             const hasActive = ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
