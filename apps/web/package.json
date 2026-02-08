@@ -9,10 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "axios": "^1.13.4",
     "daisyui": "^5.5.14",
-    "@repo/db": "workspace:*",
     "framer-motion": "^12.29.2",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
@@ -21,6 +21,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "latest",
+    "react-markdown": "^10.1.0",
     "tailwindcss": "^4.1.18",
     "zod": "^4.3.6"
   },

@@ -22,6 +22,8 @@ import { TranscriptViewer } from "./transcript-viewer";
 import { SummaryModal } from "./summary-modal";
 import { UserProfileBadge } from "./user-profile-badge";
 import { cleanupErrorMessage } from "@/lib/utils/error-utils";
+import { ChatInterface } from "./chat-interface";
+import { chatApi } from "@/lib/api/chat";
 
 export function MeetingLibrary({ session }: { session: any }) {
   const router = useRouter();
@@ -159,6 +161,35 @@ export function MeetingLibrary({ session }: { session: any }) {
     null,
   );
   const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
+
+  const handleChatOpen = async (recordingId: string) => {
+    if (!session?.accessToken) return;
+    setChatLoadingId(recordingId);
+
+    try {
+      // Check for existing chat sessions
+      const chats = await chatApi.getChats(session.accessToken, recordingId);
+
+      if (chats && chats.length > 0) {
+        // Resume the latest chat
+        setActiveChatId(chats[0].id);
+      } else {
+        // Start a new chat
+        const newChat = await chatApi.startChat(
+          recordingId,
+          session.accessToken,
+        );
+        setActiveChatId(newChat.chatId);
+      }
+    } catch (error) {
+      console.error("Failed to open chat:", error);
+      // Ideally show a toast or error message here
+    } finally {
+      setChatLoadingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-primary-500/30 relative flex flex-col">
@@ -393,11 +424,23 @@ export function MeetingLibrary({ session }: { session: any }) {
                       {rec.recordingStatus === "COMPLETED" && (
                         <>
                           <button
-                            disabled={rec.transcriptionStatus !== "COMPLETED"}
+                            disabled={
+                              rec.transcriptionStatus !== "COMPLETED" ||
+                              chatLoadingId === rec.id
+                            }
+                            onClick={() => handleChatOpen(rec.id)}
                             className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-text-100 disabled:hover:text-text-900 disabled:hover:shadow-none"
                           >
-                            <MessageSquare className="w-4 h-4 text-primary-500" />
-                            <span>Analyst</span>
+                            {chatLoadingId === rec.id ? (
+                              <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
+                            ) : (
+                              <MessageSquare className="w-4 h-4 text-primary-500" />
+                            )}
+                            <span>
+                              {chatLoadingId === rec.id
+                                ? "Opening..."
+                                : "Analyst"}
+                            </span>
                           </button>
 
                           {/* Summary Button */}
@@ -476,6 +519,17 @@ export function MeetingLibrary({ session }: { session: any }) {
         isOpen={!!activeSummaryId}
         onClose={() => setActiveSummaryId(null)}
         session={session}
+      />
+
+      <ChatInterface
+        chatId={activeChatId}
+        isOpen={!!activeChatId}
+        onClose={() => setActiveChatId(null)}
+        session={session}
+        title={
+          recordings.find((r) => r.id === activeChatId)?.title ||
+          "Chat with Analyst"
+        }
       />
     </div>
   );
