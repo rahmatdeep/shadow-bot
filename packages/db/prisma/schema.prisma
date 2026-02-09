@@ -14,15 +14,16 @@ datasource db {
 }
 
 model User {
-  id                String      @id @default(uuid())
-  email             String      @unique
+  id                String         @id @default(uuid())
+  email             String         @unique
   password          String
   name              String
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   provider          String?
   providerAccountId String?
   recordings        Recording[]
+  querySessions     QuerySession[]
 }
 
 model Recording {
@@ -75,6 +76,25 @@ model ChatMessage {
   role          ChatRole
   content       String
   createdAt     DateTime    @default(now())
+}
+
+model QuerySession {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  title     String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  QueryMessage[]
+}
+
+model QueryMessage {
+  id             String       @id @default(uuid())
+  querySessionId String
+  querySession   QuerySession @relation(fields: [querySessionId], references: [id], onDelete: Cascade)
+  role           ChatRole
+  content        String
+  createdAt      DateTime     @default(now())
 }
 
 enum RecordingStatus {

@@ -29,6 +29,15 @@ export const ChatStartSchema = z.object({
   recordingId: z.string().uuid(),
 });
 
+export const QuerySchema = z.object({
+  querySessionId: z.string().uuid().optional(),
+  message: z.string().min(1),
+});
+
+export const QuerySessionIdSchema = z.object({
+  querySessionId: z.string().uuid(),
+});
+
 export const ChatMessageSchema = z.object({
   chatId: z.string().uuid(),
   message: z.string().min(1),
@@ -66,6 +75,8 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 export type GoogleAuthInput = z.infer<typeof GoogleAuthSchema>;
 export type JoinMeetingInput = z.infer<typeof JoinMeetingSchema>;
 export type ChatStartInput = z.infer<typeof ChatStartSchema>;
+export type QueryInput = z.infer<typeof QuerySchema>;
+export type QuerySessionId = z.infer<typeof QuerySessionIdSchema>;
 export type ChatMessageInput = z.infer<typeof ChatMessageSchema>;
 export type MeetingSummary = z.infer<typeof MeetingSummarySchema>;
 export type Tags = z.infer<typeof TagsSchema>;

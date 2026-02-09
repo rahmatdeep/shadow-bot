@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createClient } from "redis";
 import { JoinMeetingPayload, JoinMeetingSchema } from "@repo/types";
 import { prisma } from "@repo/db/client";
+import { verifyRecordingOwnership } from "../../utils/ownership";
 
 const redisClient = createClient();
 
@@ -10,18 +11,6 @@ const redisClient = createClient();
 })();
 
 const meetingRouter: Router = Router();
-
-// Helper to verify recording ownership
-async function verifyRecordingOwnership(
-  recordingId: string,
-  userId: string,
-): Promise<boolean> {
-  const recording = await prisma.recording.findUnique({
-    where: { id: recordingId },
-    select: { userId: true },
-  });
-  return recording?.userId === userId;
-}
 
 // List user's meetings/recordings
 meetingRouter.get("/", async (req, res) => {

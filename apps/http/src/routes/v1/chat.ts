@@ -3,26 +3,9 @@ import { prisma } from "@repo/db/client";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { ChatStartSchema, ChatMessageSchema } from "@repo/types";
+import { verifyChatOwnership, verifyRecordingOwnership } from "../../utils/ownership";
 
 const chatRouter: Router = Router();
-
-// Helper to verify recording ownership
-async function verifyRecordingOwnership(recordingId: string, userId: string): Promise<boolean> {
-    const recording = await prisma.recording.findUnique({
-        where: { id: recordingId },
-        select: { userId: true },
-    });
-    return recording?.userId === userId;
-}
-
-// Helper to verify chat ownership (via recording)
-async function verifyChatOwnership(chatId: string, userId: string): Promise<boolean> {
-    const chatSession = await prisma.chatSession.findUnique({
-        where: { id: chatId },
-        include: { recording: { select: { userId: true } } },
-    });
-    return chatSession?.recording.userId === userId;
-}
 
 // Start a new chat session for a recording
 chatRouter.post("/start", async (req, res) => {
