@@ -49,35 +49,65 @@ router.post("/", async (req: AuthRequest, res) => {
             return;
         }
 
-        // 2. Fetch all transcripts with summaries and tags for relevance check
-        const transcriptsData = await prisma.transcript.findMany({
-            where: {
-                recording: { userId },
-                detailedSummaryStatus: "COMPLETED",
-            },
-            select: {
-                recordingId: true,
-                detailedSummary: true,
-                tags: true,
-                recording: { select: { title: true } }
-            }
-        });
-
-        let context = "No relevant meeting transcripts were found for this query.";
-
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-flash-latest",
             apiKey: process.env.GEMINI_API_KEY,
         });
 
+        // 2. Identify if there's a time-frame filter in the query
+        const interpretationPrompt = `You are an assistant that extracts time-frame filters from a user's query.
+Current Time (ISO): ${new Date().toISOString()}
+User Query: "${message}"
+
+If the user specifies a time frame (e.g., "last week", "this month", "yesterday", "this week"), extract the start and end dates in ISO 8601 format.
+If no time frame is specified, return null for both fields.
+
+Respond with ONLY a JSON object: {"startDate": "ISO_DATE" | null, "endDate": "ISO_DATE" | null}`;
+
+        const interpretationResponse = await model.invoke([new HumanMessage(interpretationPrompt)]);
+        let filters: { startDate: string | null; endDate: string | null } = { startDate: null, endDate: null };
+        try {
+            const content = typeof interpretationResponse.content === "string" ? interpretationResponse.content : JSON.stringify(interpretationResponse.content);
+            const jsonMatch = content.match(/\{.*\}/s);
+            if (jsonMatch) {
+                filters = JSON.parse(jsonMatch[0]);
+            }
+        } catch (e) {
+            console.error("Failed to parse interpretation response:", e);
+        }
+
+        // 3. Fetch transcripts with optional time-frame filtering
+        const whereClause: any = {
+            recording: { userId },
+            detailedSummaryStatus: "COMPLETED",
+        };
+
+        if (filters.startDate || filters.endDate) {
+            whereClause.recording.createdAt = {};
+            if (filters.startDate) whereClause.recording.createdAt.gte = new Date(filters.startDate);
+            if (filters.endDate) whereClause.recording.createdAt.lte = new Date(filters.endDate);
+        }
+
+        const transcriptsData = await prisma.transcript.findMany({
+            where: whereClause,
+            select: {
+                recordingId: true,
+                detailedSummary: true,
+                tags: true,
+                recording: { select: { title: true, createdAt: true } }
+            }
+        });
+
+        let context = "No relevant meeting transcripts were found for this query.";
+
         if (transcriptsData.length > 0) {
-            // 3. Identify relevant transcripts using LLM
+            // 4. Identify relevant transcripts using LLM
             const relevancePrompt = `You are an assistant that identifies relevant meeting transcripts based on a user's query.
 User Query: "${message}"
 
 Below are summaries and tags of several meetings. Identify the IDs of the meetings that are highly relevant to answering the query.
 Meetings:
-${transcriptsData.map(t => `ID: ${t.recordingId}\nTitle: ${t.recording?.title}\nSummary: ${t.detailedSummary}\nTags: ${t.tags.join(", ")}\n---`).join("\n")}
+${transcriptsData.map(t => `ID: ${t.recordingId}\nTitle: ${t.recording?.title}\nDate: ${t.recording?.createdAt.toISOString()}\nSummary: ${t.detailedSummary}\nTags: ${t.tags.join(", ")}\n---`).join("\n")}
 
 Respond with ONLY a comma-separated list of relevant meeting IDs. If none are relevant, respond with "NONE".`;
 
