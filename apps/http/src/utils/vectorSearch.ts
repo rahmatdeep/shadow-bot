@@ -5,7 +5,7 @@ const COLLECTION_NAME = "transcript_chunks";
 const QDRANT_URL = "http://localhost:6333";
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
-    model: "text-embedding-004",
+    model: "gemini-embedding-001",
     apiKey: process.env.GEMINI_API_KEY,
 });
 
