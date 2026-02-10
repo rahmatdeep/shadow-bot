@@ -7,6 +7,7 @@ import { AuthRequest } from "../../middleware/auth";
 import { verifyQueryOwnership } from "../../utils/ownership";
 import { searchSimilarChunks } from "../../utils/vectorSearch";
 import { parseTimeFilter, buildPrismaDateFilter } from "../../utils/parseTimeFilter";
+import { classifyLLMError, withLLMRetry } from "@repo/common";
 
 const router: Router = Router();
 
@@ -116,7 +117,7 @@ router.post("/", async (req: AuthRequest, res) => {
         );
 
         const assistantContent = await time("generate_response", async () => {
-            const response = await model.invoke(conversationHistory);
+            const response = await withLLMRetry(() => model.invoke(conversationHistory));
             return typeof response.content === "string" ? response.content : JSON.stringify(response.content);
         });
 
@@ -143,8 +144,9 @@ router.post("/", async (req: AuthRequest, res) => {
         });
 
     } catch (error) {
-        console.error("Query processing error:", error);
-        res.status(500).json({ error: "Failed to process query" });
+        const classified = classifyLLMError(error);
+        console.error(`Query processing error [${classified.type}]:`, error);
+        res.status(classified.status).json({ error: classified.message });
     }
 });
 

@@ -1,5 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { withLLMRetry, classifyLLMError } from "@repo/common";
 import "dotenv/config";
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -8,7 +9,7 @@ if (!apiKey) {
 }
 
 const model = new ChatGoogleGenerativeAI({
-    model: "gemini-flash-latest", 
+    model: "gemini-flash-latest",
     apiKey: apiKey,
 });
 
@@ -36,12 +37,13 @@ RULES:
     const chain = prompt.pipe(model);
 
     try {
-        const response = await chain.invoke({
+        const response = await withLLMRetry(() => chain.invoke({
             transcript: transcript,
-        });
+        }));
         return response.content as string;
     } catch (error) {
-        console.error("Error generating detailed summary:", error);
+        const classified = classifyLLMError(error);
+        console.error(`Error generating detailed summary [${classified.type}]:`, error);
         return "Failed to generate detailed summary.";
     }
 }

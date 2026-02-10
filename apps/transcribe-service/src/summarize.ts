@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MeetingSummarySchema } from "@repo/types";
+import { withLLMRetry, classifyLLMError } from "@repo/common";
 import "dotenv/config";
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -23,12 +24,13 @@ export async function summarizeMeeting(transcript: string) {
     const chain = prompt.pipe(structuredModel);
 
     try {
-        const response = await chain.invoke({
+        const response = await withLLMRetry(() => chain.invoke({
             transcript: transcript,
-        });
+        }));
         return response;
     } catch (error) {
-        console.error("Error summarizing meeting:", error);
+        const classified = classifyLLMError(error);
+        console.error(`Error summarizing meeting [${classified.type}]:`, error);
         return {
             title: "Meeting Summary",
             goal: "Failed to summarize meeting.",

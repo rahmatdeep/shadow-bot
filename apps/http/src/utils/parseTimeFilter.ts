@@ -1,5 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z } from "zod";
+import { withLLMRetry } from "@repo/common";
 
 const TimeFilterSchema = z.object({
     afterDaysAgo: z.number().nullable().describe("Number of days ago to start from. e.g. 7 means 'in the last 7 days'. null if no lower bound."),
@@ -28,10 +29,11 @@ export async function parseTimeFilter(query: string): Promise<TimeFilter> {
 
     const structured = model.withStructuredOutput(TimeFilterSchema);
 
-    const result = await structured.invoke([
-        {
-            role: "system",
-            content: `You extract time filters from user queries about their meetings.
+    try {
+        const result = await withLLMRetry(() => structured.invoke([
+            {
+                role: "system",
+                content: `You extract time filters from user queries about their meetings.
 Today's date is ${new Date().toISOString().split("T")[0]}.
 Return relative day offsets. If the query has no time reference, return all nulls.
 Examples:
@@ -40,11 +42,14 @@ Examples:
 - "yesterday's meeting" → afterDaysAgo: 1, beforeDaysAgo: 0, limit: null
 - "meetings this month" → afterDaysAgo: ${new Date().getDate()}, beforeDaysAgo: null, limit: null
 - "what is machine learning?" → afterDaysAgo: null, beforeDaysAgo: null, limit: null`,
-        },
-        { role: "user", content: query },
-    ]);
-
-    return result;
+            },
+            { role: "user", content: query },
+        ]));
+        return result;
+    } catch (error) {
+        console.warn("[parseTimeFilter] LLM failed, falling back to unfiltered search:", (error as Error).message);
+        return { afterDaysAgo: null, beforeDaysAgo: null, limit: null };
+    }
 }
 
 /**

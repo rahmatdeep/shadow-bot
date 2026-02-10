@@ -25,3 +25,6 @@ export function normalizeTags(tags: string[]): string[] {
     const normalized = tags.map(normalizeTag).filter(tag => tag.length > 0);
     return Array.from(new Set(normalized));
 }
+
+export { classifyLLMError, withLLMRetry } from "./llmErrors";
+export type { LLMErrorType, ClassifiedLLMError } from "./llmErrors";

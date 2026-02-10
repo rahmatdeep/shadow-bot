@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { TagsSchema } from "@repo/types";
+import { withLLMRetry, classifyLLMError } from "@repo/common";
 import "dotenv/config";
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -40,13 +41,14 @@ Return format: ["tag1", "tag2", "tag3"]`]
     const chain = prompt.pipe(structuredModel);
 
     try {
-        const response = await chain.invoke({
+        const response = await withLLMRetry(() => chain.invoke({
             transcript: transcript,
             summary: JSON.stringify(summary),
-        });
+        }));
         return response;
     } catch (error) {
-        console.error("Error generating tags:", error);
+        const classified = classifyLLMError(error);
+        console.error(`Error generating tags [${classified.type}]:`, error);
         return [];
     }
 }

@@ -4,6 +4,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { ChatStartSchema, ChatMessageSchema } from "@repo/types";
 import { verifyChatOwnership, verifyRecordingOwnership } from "../../utils/ownership";
+import { classifyLLMError, withLLMRetry } from "@repo/common";
 
 const chatRouter: Router = Router();
 
@@ -101,7 +102,7 @@ chatRouter.post("/message", async (req, res) => {
             new HumanMessage(message),
         ];
 
-        const response = await model.invoke(conversationHistory);
+        const response = await withLLMRetry(() => model.invoke(conversationHistory));
         const assistantContent = typeof response.content === "string"
             ? response.content
             : JSON.stringify(response.content);
@@ -129,8 +130,9 @@ chatRouter.post("/message", async (req, res) => {
             assistantMessageId: assistantMessage.id,
         });
     } catch (error) {
-        console.error("Chat message error:", error);
-        res.status(500).json({ error: "Failed to process chat message" });
+        const classified = classifyLLMError(error);
+        console.error(`Chat message error [${classified.type}]:`, error);
+        res.status(classified.status).json({ error: classified.message });
     }
 });
 

@@ -21,6 +21,7 @@
     "@langchain/qdrant": "^1.0.1",
     "@qdrant/js-client-rest": "^1.16.2",
     "@repo/db": "workspace:*",
+    "@repo/common": "workspace:*",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
