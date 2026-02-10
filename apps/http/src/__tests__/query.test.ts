@@ -43,6 +43,15 @@ jest.mock('../utils/vectorSearch', () => ({
     searchSimilarChunks: jest.fn().mockResolvedValue([]),
 }));
 
+jest.mock('../utils/parseTimeFilter', () => ({
+    parseTimeFilter: jest.fn().mockResolvedValue({
+        afterDaysAgo: null,
+        beforeDaysAgo: null,
+        limit: null,
+    }),
+    buildPrismaDateFilter: jest.fn().mockReturnValue({}),
+}));
+
 const app = express();
 app.use(express.json());
 

@@ -6,6 +6,7 @@ import { QuerySchema, QuerySessionIdSchema } from "@repo/types";
 import { AuthRequest } from "../../middleware/auth";
 import { verifyQueryOwnership } from "../../utils/ownership";
 import { searchSimilarChunks } from "../../utils/vectorSearch";
+import { parseTimeFilter, buildPrismaDateFilter } from "../../utils/parseTimeFilter";
 
 const router: Router = Router();
 
@@ -58,20 +59,28 @@ router.post("/", async (req: AuthRequest, res) => {
             return;
         }
 
-        // 2. Find user's recordings and search for relevant chunks via Qdrant
+        // 2. Parse time filter from user query
+        const timeFilter = await time("time_filter", () => parseTimeFilter(message));
+        const prismaDateFilter = buildPrismaDateFilter(timeFilter);
+
+        // 3. Find user's recordings (scoped by time) and search via Qdrant
         const context = await time("vector_search", async () => {
-            // Get all recording IDs owned by this user
             const recordings = await prisma.recording.findMany({
-                where: { userId },
+                where: {
+                    userId,
+                    ...(prismaDateFilter.dateWhere && { createdAt: prismaDateFilter.dateWhere }),
+                },
                 select: { id: true },
+                ...(prismaDateFilter.orderBy && { orderBy: prismaDateFilter.orderBy }),
+                ...(prismaDateFilter.take && { take: prismaDateFilter.take }),
             });
             const recordingIds = recordings.map(r => r.id);
 
             if (recordingIds.length === 0) {
-                return "No meeting recordings found for this user.";
+                return "No meeting recordings found for this user in the specified time range.";
             }
 
-            // Semantic search in Qdrant
+            // Semantic search in Qdrant, scoped to filtered recordings
             const chunks = await searchSimilarChunks(message, recordingIds, 10);
 
             if (chunks.length === 0) {
