@@ -18,6 +18,8 @@
     "@google/generative-ai": "^0.24.1",
     "@langchain/core": "^1.1.18",
     "@langchain/google-genai": "^2.1.14",
+    "@langchain/qdrant": "^1.0.1",
+    "@qdrant/js-client-rest": "^1.16.2",
     "@repo/db": "workspace:*",
     "dotenv": "^17.2.3",
     "redis": "^5.10.0",

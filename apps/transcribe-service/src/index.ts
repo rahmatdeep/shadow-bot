@@ -4,6 +4,7 @@ import { createReadStream, statSync } from "fs";
 import { summarizeMeeting } from "./summarize";
 import { detailedSummarizeMeeting } from "./detailedSummarize";
 import { generateTags } from "./tags";
+import { embedAndStore } from "./embed";
 import { normalizeTags } from "@repo/common";
 
 import { createClient } from "redis";
@@ -158,6 +159,28 @@ async function processTranscription(payload: TranscriptionPayload) {
                 tagsStatus: "COMPLETED"
             }
         });
+
+        // 5. Chunk, embed, and store in Qdrant
+        console.log("\n--- Embedding Transcript ---\n");
+        await prisma.transcript.update({
+            where: { recordingId },
+            data: { embeddingStatus: "IN_PROGRESS" }
+        });
+
+        try {
+            const chunkCount = await embedAndStore(recordingId, plainTranscript);
+            await prisma.transcript.update({
+                where: { recordingId },
+                data: { embeddingStatus: "COMPLETED" }
+            });
+            console.log(`Embedded ${chunkCount} chunks for ${recordingId}`);
+        } catch (embedError) {
+            console.error("Embedding failed:", embedError);
+            await prisma.transcript.update({
+                where: { recordingId },
+                data: { embeddingStatus: "FAILED" }
+            });
+        }
 
         console.log(`Successfully processed and saved transcription and summary for ${recordingId}`);
 

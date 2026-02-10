@@ -57,6 +57,7 @@ model Transcript {
   detailedSummaryStatus    TranscriptStatus @default(PENDING)
   tags                     String[]
   tagsStatus               TranscriptStatus @default(PENDING)
+  embeddingStatus          TranscriptStatus @default(PENDING)
 }
 
 model ChatSession {

@@ -43,6 +43,25 @@ This project is a Turborepo monorepo:
 -   [Redis](https://redis.io/)
 -   [PostgreSQL](https://www.postgresql.org/)
 
+### Docker Setup
+
+The following containers must be running for the platform to function:
+
+1. **PostgreSQL** (Database):
+   ```bash
+   docker run -d --name shadowdb -p 5432:5432 -e POSTGRES_PASSWORD=yourpassword postgres:latest
+   ```
+
+2. **Redis** (Queues):
+   ```bash
+   docker run -d --name drawr-redis -p 6379:6379 redis
+   ```
+
+3. **Qdrant** (Vector Search):
+   ```bash
+   docker run -d --name qdrant -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage qdrant/qdrant
+   ```
+
 ### Setup
 
 1.  Install dependencies:

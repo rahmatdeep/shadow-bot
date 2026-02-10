@@ -5,6 +5,7 @@ import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages
 import { QuerySchema, QuerySessionIdSchema } from "@repo/types";
 import { AuthRequest } from "../../middleware/auth";
 import { verifyQueryOwnership } from "../../utils/ownership";
+import { searchSimilarChunks } from "../../utils/vectorSearch";
 
 const router: Router = Router();
 
@@ -20,117 +21,72 @@ router.post("/", async (req: AuthRequest, res) => {
     let { querySessionId, message } = parsed.data;
 
     try {
-        let querySession;
+        const timing: Record<string, number> = {};
+        const time = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
+            const start = performance.now();
+            const result = await fn();
+            timing[label] = Math.round(performance.now() - start);
+            return result;
+        };
 
-        if (querySessionId) {
-            // Continuation of existing query session
-            if (!(await verifyQueryOwnership(querySessionId, userId))) {
-                res.status(403).json({ error: "Access denied" });
-                return;
+        const { session: querySession, resolvedSessionId } = await time("session_setup", async () => {
+            if (querySessionId) {
+                // Continuation of existing query session
+                if (!(await verifyQueryOwnership(querySessionId, userId))) {
+                    return { session: null, resolvedSessionId: querySessionId };
+                }
+                const session = await prisma.querySession.findUnique({
+                    where: { id: querySessionId },
+                    include: { messages: { orderBy: { createdAt: "asc" } } },
+                });
+                return { session, resolvedSessionId: querySessionId };
+            } else {
+                // Start new query session automatically
+                const session = await prisma.querySession.create({
+                    data: {
+                        userId,
+                        title: message.substring(0, 50),
+                    },
+                    include: { messages: true }
+                });
+                return { session, resolvedSessionId: session.id };
             }
-            querySession = await prisma.querySession.findUnique({
-                where: { id: querySessionId },
-                include: { messages: { orderBy: { createdAt: "asc" } } },
-            });
-        } else {
-            // Start new query session automatically
-            querySession = await prisma.querySession.create({
-                data: {
-                    userId,
-                    title: message.substring(0, 50),
-                },
-                include: { messages: true }
-            });
-            querySessionId = querySession.id;
-        }
+        });
 
         if (!querySession) {
             res.status(404).json({ error: "Query session not found" });
             return;
         }
 
+        // 2. Find user's recordings and search for relevant chunks via Qdrant
+        const context = await time("vector_search", async () => {
+            // Get all recording IDs owned by this user
+            const recordings = await prisma.recording.findMany({
+                where: { userId },
+                select: { id: true },
+            });
+            const recordingIds = recordings.map(r => r.id);
+
+            if (recordingIds.length === 0) {
+                return "No meeting recordings found for this user.";
+            }
+
+            // Semantic search in Qdrant
+            const chunks = await searchSimilarChunks(message, recordingIds, 10);
+
+            if (chunks.length === 0) {
+                return "No relevant meeting transcripts were found for this query.";
+            }
+
+            return `Use the following relevant meeting transcript excerpts as context to answer the user's query:\n\n${chunks.map((c, i) => `[Chunk ${i + 1} | Recording: ${c.recordingId} | Relevance: ${(c.score * 100).toFixed(1)}%]\n${c.content}`).join("\n\n---\n\n")}`;
+        });
+
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-flash-latest",
             apiKey: process.env.GEMINI_API_KEY,
         });
 
-        // 2. Identify if there's a time-frame filter in the query
-        const interpretationPrompt = `You are an assistant that extracts time-frame filters from a user's query.
-Current Time (ISO): ${new Date().toISOString()}
-User Query: "${message}"
-
-If the user specifies a time frame (e.g., "last week", "this month", "yesterday", "this week"), extract the start and end dates in ISO 8601 format.
-If no time frame is specified, return null for both fields.
-
-Respond with ONLY a JSON object: {"startDate": "ISO_DATE" | null, "endDate": "ISO_DATE" | null}`;
-
-        const interpretationResponse = await model.invoke([new HumanMessage(interpretationPrompt)]);
-        let filters: { startDate: string | null; endDate: string | null } = { startDate: null, endDate: null };
-        try {
-            const content = typeof interpretationResponse.content === "string" ? interpretationResponse.content : JSON.stringify(interpretationResponse.content);
-            const jsonMatch = content.match(/\{.*\}/s);
-            if (jsonMatch) {
-                filters = JSON.parse(jsonMatch[0]);
-            }
-        } catch (e) {
-            console.error("Failed to parse interpretation response:", e);
-        }
-
-        // 3. Fetch transcripts with optional time-frame filtering
-        const whereClause: any = {
-            recording: { userId },
-            detailedSummaryStatus: "COMPLETED",
-        };
-
-        if (filters.startDate || filters.endDate) {
-            whereClause.recording.createdAt = {};
-            if (filters.startDate) whereClause.recording.createdAt.gte = new Date(filters.startDate);
-            if (filters.endDate) whereClause.recording.createdAt.lte = new Date(filters.endDate);
-        }
-
-        const transcriptsData = await prisma.transcript.findMany({
-            where: whereClause,
-            select: {
-                recordingId: true,
-                detailedSummary: true,
-                tags: true,
-                recording: { select: { title: true, createdAt: true } }
-            }
-        });
-
-        let context = "No relevant meeting transcripts were found for this query.";
-
-        if (transcriptsData.length > 0) {
-            // 4. Identify relevant transcripts using LLM
-            const relevancePrompt = `You are an assistant that identifies relevant meeting transcripts based on a user's query.
-User Query: "${message}"
-
-Below are summaries and tags of several meetings. Identify the IDs of the meetings that are highly relevant to answering the query.
-Meetings:
-${transcriptsData.map(t => `ID: ${t.recordingId}\nTitle: ${t.recording?.title}\nDate: ${t.recording?.createdAt.toISOString()}\nSummary: ${t.detailedSummary}\nTags: ${t.tags.join(", ")}\n---`).join("\n")}
-
-Respond with ONLY a comma-separated list of relevant meeting IDs. If none are relevant, respond with "NONE".`;
-
-            const relevanceResponse = await model.invoke([new HumanMessage(relevancePrompt)]);
-            const relevantIdsStr = (relevanceResponse.content as string).trim();
-
-            if (relevantIdsStr !== "NONE" && relevantIdsStr !== "") {
-                const relevantIds = relevantIdsStr.split(",").map(id => id.trim());
-                const fullTranscripts = await prisma.transcript.findMany({
-                    where: {
-                        recordingId: { in: relevantIds },
-                        recording: { userId }
-                    },
-                    select: { transcript: true }
-                });
-                const relevantTranscripts = fullTranscripts.map(t => t.transcript).filter(Boolean) as string[];
-                if (relevantTranscripts.length > 0) {
-                    context = `Use the following relevant meeting transcripts as context to answer the user's query:\n\n${relevantTranscripts.join("\n\n---\n\n")}`;
-                }
-            }
-        }
-
-        // 4. Generate final answer with query history
+        // 3. Generate final answer with query history
         const conversationHistory = [
             new SystemMessage(`You are a helpful assistant answering questions across multiple meeting transcripts. ${context}`),
             ...(querySession.messages || []).map(msg =>
@@ -140,31 +96,41 @@ Respond with ONLY a comma-separated list of relevant meeting IDs. If none are re
         ];
 
         // Save user message to DB
-        const userMessage = await prisma.queryMessage.create({
-            data: {
-                querySessionId: querySessionId,
-                role: "USER",
-                content: message,
-            },
-        });
+        const userMessage = await time("save_user_message", () =>
+            prisma.queryMessage.create({
+                data: {
+                    querySessionId: resolvedSessionId,
+                    role: "USER",
+                    content: message,
+                },
+            })
+        );
 
-        const response = await model.invoke(conversationHistory);
-        const assistantContent = typeof response.content === "string" ? response.content : JSON.stringify(response.content);
+        const assistantContent = await time("generate_response", async () => {
+            const response = await model.invoke(conversationHistory);
+            return typeof response.content === "string" ? response.content : JSON.stringify(response.content);
+        });
 
         // Save assistant response to DB
-        const assistantMessage = await prisma.queryMessage.create({
-            data: {
-                querySessionId: querySessionId,
-                role: "ASSISTANT",
-                content: assistantContent,
-            },
-        });
+        const assistantMessage = await time("save_assistant_message", () =>
+            prisma.queryMessage.create({
+                data: {
+                    querySessionId: resolvedSessionId,
+                    role: "ASSISTANT",
+                    content: assistantContent,
+                },
+            })
+        );
+
+        const totalMs = Object.values(timing).reduce((sum, ms) => sum + ms, 0);
+        console.log(`[Query Timing] total=${totalMs}ms |`, Object.entries(timing).map(([k, v]) => `${k}=${v}ms`).join(" | "));
 
         res.json({
             response: assistantContent,
-            querySessionId: querySessionId,
+            querySessionId: resolvedSessionId,
             userMessageId: userMessage.id,
-            assistantMessageId: assistantMessage.id
+            assistantMessageId: assistantMessage.id,
+            timing,
         });
 
     } catch (error) {
