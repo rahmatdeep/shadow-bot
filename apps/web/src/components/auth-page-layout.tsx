@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import { Video } from "lucide-react";
+import { RiGhostSmileLine } from "react-icons/ri";
 import Link from "next/link";
 
 interface AuthPageLayoutProps {
@@ -235,7 +235,7 @@ export function AuthPageLayout({
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="w-14 h-14 rounded-2xl bg-linear-to-br from-primary-600 to-primary-800 mx-auto flex items-center justify-center shadow-2xl shadow-primary-800/20 group-hover:shadow-primary-800/40 transition-shadow duration-300"
             >
-              <Video className="text-white w-7 h-7" />
+              <RiGhostSmileLine className="text-white w-7 h-7" />
             </motion.div>
           </Link>
           <motion.div
