@@ -21,7 +21,15 @@ meetingRouter.get("/", async (req, res) => {
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
-        transcript: { select: { transcriptionStatus: true, summaryStatus: true, failureReason: true } },
+        transcript: {
+          select: {
+            transcriptionStatus: true,
+            summaryStatus: true,
+            tagsStatus: true,
+            tags: true,
+            failureReason: true,
+          },
+        },
       },
     });
 
@@ -34,6 +42,8 @@ meetingRouter.get("/", async (req, res) => {
       fileName: rec.fileName,
       transcriptionStatus: rec.transcript?.transcriptionStatus,
       summaryStatus: rec.transcript?.summaryStatus,
+      tagsStatus: rec.transcript?.tagsStatus,
+      tags: rec.transcript?.tags || [],
       createdAt: rec.createdAt,
       updatedAt: rec.updatedAt,
       transcriptOrSummaryError: rec.transcript?.failureReason || null,
@@ -86,14 +96,16 @@ meetingRouter.get("/:id", async (req, res) => {
       updatedAt: recording.updatedAt,
       transcript: recording.transcript
         ? {
-          transcriptionStatus: recording.transcript.transcriptionStatus,
-          summaryStatus: recording.transcript.summaryStatus,
-          transcript: recording.transcript.transcript,
-          transcriptWithTimeStamps:
-            recording.transcript.transcriptWithTimeStamps,
-          summary: recording.transcript.summary,
-          transcriptOrSummaryError: recording.transcript.failureReason,
-        }
+            transcriptionStatus: recording.transcript.transcriptionStatus,
+            summaryStatus: recording.transcript.summaryStatus,
+            transcript: recording.transcript.transcript,
+            transcriptWithTimeStamps:
+              recording.transcript.transcriptWithTimeStamps,
+            summary: recording.transcript.summary,
+            tagsStatus: recording.transcript.tagsStatus,
+            tags: recording.transcript.tags,
+            transcriptOrSummaryError: recording.transcript.failureReason,
+          }
         : null,
       recentChats: recording.chatSessions,
     });
@@ -122,7 +134,12 @@ meetingRouter.get("/:id/status", async (req, res) => {
         status: true,
         errorMetadata: true,
         transcript: {
-          select: { transcriptionStatus: true, summaryStatus: true, failureReason: true },
+          select: {
+            transcriptionStatus: true,
+            summaryStatus: true,
+            tagsStatus: true,
+            failureReason: true,
+          },
         },
       },
     });
@@ -137,6 +154,7 @@ meetingRouter.get("/:id/status", async (req, res) => {
       recordingStatus: recording.status || "PENDING",
       transcriptionStatus: recording.transcript?.transcriptionStatus,
       summaryStatus: recording.transcript?.summaryStatus,
+      tagsStatus: recording.transcript?.tagsStatus,
       recordingError: recording.errorMetadata || null,
       transcriptOrSummaryError: recording.transcript?.failureReason || null,
     });
@@ -171,9 +189,11 @@ meetingRouter.get("/:id/transcript", async (req, res) => {
       recordingId: transcript.recordingId,
       transcriptionStatus: transcript.transcriptionStatus || "PENDING",
       summaryStatus: transcript.summaryStatus || "PENDING",
+      tagsStatus: transcript.tagsStatus || "PENDING",
       transcript: transcript.transcript,
       transcriptWithTimeStamps: transcript.transcriptWithTimeStamps,
       summary: transcript.summary,
+      tags: transcript.tags,
       transcriptOrSummaryError: transcript.failureReason || null,
       updatedAt: transcript.updatedAt,
     });

@@ -30,7 +30,7 @@ export const ChatStartSchema = z.object({
 });
 
 export const QuerySchema = z.object({
-  querySessionId: z.string().uuid().optional(),
+  querySessionId: z.string().uuid().nullable(),
   message: z.string().min(1),
 });
 
@@ -62,12 +62,20 @@ export interface TranscriptionPayload {
 export const MeetingSummarySchema = z.object({
   title: z.string().describe("Catchy and concise title of the meeting"),
   goal: z.string().describe("Main objective or primary goal discussed"),
-  keyPoints: z.array(z.string()).describe("A list of the most important points covered"),
-  actionItems: z.array(z.string()).describe("List of clear tasks or follow-up items with owners if mentioned"),
+  keyPoints: z
+    .array(z.string())
+    .describe("A list of the most important points covered"),
+  actionItems: z
+    .array(z.string())
+    .describe(
+      "List of clear tasks or follow-up items with owners if mentioned",
+    ),
 });
 
 // Tags
-export const TagsSchema = z.array(z.string()).describe("A list of 3-7 tags that capture the essence of the meeting");
+export const TagsSchema = z
+  .array(z.string())
+  .describe("A list of 3-7 tags that capture the essence of the meeting");
 
 // Inferred Types
 export type SignupInput = z.infer<typeof SignupSchema>;

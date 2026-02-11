@@ -7,11 +7,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface UserProfileBadgeProps {
-  user: {
+  user?: {
     name?: string | null;
     email?: string | null;
     image?: string | null;
-  };
+  } | null;
 }
 
 export function UserProfileBadge({ user }: UserProfileBadgeProps) {
@@ -30,10 +30,10 @@ export function UserProfileBadge({ user }: UserProfileBadgeProps) {
         className="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:bg-white/80 transition-all duration-300 cursor-default group"
       >
         <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden border border-primary-200 text-primary-600 shrink-0">
-          {user.image ? (
+          {user?.image ? (
             <Image
-              src={user.image}
-              alt={user.name || "User"}
+              src={user?.image}
+              alt={user?.name || "User"}
               width={36}
               height={36}
               className="w-full h-full object-cover"
@@ -45,11 +45,11 @@ export function UserProfileBadge({ user }: UserProfileBadgeProps) {
 
         <div className="flex flex-col">
           <span className="text-sm font-bold text-text-900 leading-tight">
-            {user.name?.split(" ")[0] || "User"}
+            {user?.name?.split(" ")[0] || "User"}
           </span>
-          {user.email && (
+          {user?.email && (
             <span className="text-[10px] font-medium text-text-400 leading-none truncate max-w-[100px]">
-              {user.email}
+              {user?.email}
             </span>
           )}
         </div>

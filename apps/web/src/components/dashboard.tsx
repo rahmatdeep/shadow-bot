@@ -417,7 +417,31 @@ export function Dashboard({ session }: { session: any }) {
           </div>
 
           {/* Footer / Links */}
-          <div className="pt-16 pb-8">
+          <div className="pt-16 pb-8 flex gap-4 justify-center">
+            <Link
+              href="/chat"
+              className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"
+            >
+              <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center text-text-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
+                <Sparkles className="w-5 h-5" />
+              </div>
+
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-text-400 uppercase tracking-wider group-hover:text-primary-600/70 transition-colors">
+                  AI Chat
+                </span>
+                <span className="font-bold text-text-700 group-hover:text-text-900 text-sm transition-colors">
+                  Ask Across Meetings
+                </span>
+              </div>
+
+              <div className="pl-2">
+                <div className="w-8 h-8 rounded-full border border-text-100 flex items-center justify-center group-hover:border-primary-200 group-hover:bg-primary-50 transition-all">
+                  <ArrowRight className="w-4 h-4 text-text-300 group-hover:text-primary-600 group-hover:-rotate-45 transition-all duration-300" />
+                </div>
+              </div>
+            </Link>
+
             <Link
               href="/library"
               className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"

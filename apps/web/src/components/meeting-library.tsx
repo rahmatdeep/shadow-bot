@@ -50,7 +50,8 @@ export function MeetingLibrary({ session }: { session: any }) {
         if (r.recordingStatus === "COMPLETED") {
           return (
             ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-            ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus)
+            ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus) ||
+            ["PENDING", "IN_PROGRESS"].includes(r.tagsStatus)
           );
         }
 
@@ -71,6 +72,8 @@ export function MeetingLibrary({ session }: { session: any }) {
                       recordingStatus: statusData.recordingStatus,
                       transcriptionStatus: statusData.transcriptionStatus,
                       summaryStatus: statusData.summaryStatus,
+                      tagsStatus: statusData.tagsStatus,
+                      tags: statusData.tags,
                       recordingError: statusData.recordingError,
                       transcriptOrSummaryError:
                         statusData.transcriptOrSummaryError,
@@ -89,7 +92,8 @@ export function MeetingLibrary({ session }: { session: any }) {
                 ) ||
                   ["PENDING", "IN_PROGRESS"].includes(
                     statusData.summaryStatus,
-                  )));
+                  ) ||
+                  ["PENDING", "IN_PROGRESS"].includes(statusData.tagsStatus)));
 
             if (isStillActive) {
               timeoutId = setTimeout(fetchStatus, 5000);
@@ -122,7 +126,8 @@ export function MeetingLibrary({ session }: { session: any }) {
               return (
                 r.recordingStatus === "COMPLETED" &&
                 (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-                  ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+                  ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus) ||
+                  ["PENDING", "IN_PROGRESS"].includes(r.tagsStatus))
               );
             });
 
@@ -152,7 +157,8 @@ export function MeetingLibrary({ session }: { session: any }) {
       return (
         r.recordingStatus === "COMPLETED" &&
         (["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
-          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus))
+          ["PENDING", "IN_PROGRESS"].includes(r.summaryStatus) ||
+          ["PENDING", "IN_PROGRESS"].includes(r.tagsStatus))
       );
     }),
   ]);
@@ -221,6 +227,14 @@ export function MeetingLibrary({ session }: { session: any }) {
           </div>
 
           <div className="flex items-center gap-6">
+            <button
+              onClick={() => router.push("/chat")}
+              className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 hover:border-primary-300 transition-all active:scale-95 shadow-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Chat
+            </button>
+
             <button
               onClick={() => router.push("/")}
               className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 hover:border-primary-300 transition-all active:scale-95 shadow-sm"
@@ -344,7 +358,7 @@ export function MeetingLibrary({ session }: { session: any }) {
                               )}
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex-1">
                               <div className="flex flex-wrap items-center gap-4">
                                 <h3 className="text-xl font-black text-text-900 tracking-tight">
                                   {rec.link ? (
@@ -394,6 +408,20 @@ export function MeetingLibrary({ session }: { session: any }) {
                                   </div>
                                 )}
                               </div>
+
+                              {/* AI Tags Display */}
+                              {rec.tags && rec.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-1 transition-all duration-500">
+                                  {rec.tags.map((tag: string) => (
+                                    <span
+                                      key={tag}
+                                      className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/40 text-text-600 border border-text-100 hover:border-primary-200 hover:text-primary-600 hover:bg-white/80 transition-all cursor-default shadow-xs"
+                                    >
+                                      # {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
 
                               {rec.recordingError && (
                                 <div className="flex items-center gap-2 text-red-700/70 text-[11px] font-bold bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-red-500/10 w-fit mt-3 shadow-sm">

@@ -13,6 +13,8 @@ export interface Meeting {
   fileName: string | null;
   transcriptionStatus: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
   summaryStatus: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  tagsStatus: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
