@@ -34,7 +34,12 @@ graph TB
 
     subgraph "Workers"
         D["Docker Manager<br/>(Dockerode)"]
-        E["Transcribe Service<br/>(ElevenLabs + Gemini)"]
+        E["Transcribe Service"]
+    end
+
+    subgraph "External AI APIs"
+        J["ElevenLabs<br/>Scribe v2"]
+        K["Google Gemini<br/>Flash"]
     end
 
     subgraph "Infrastructure"
@@ -49,14 +54,15 @@ graph TB
     C -->|Read/Write| F
     C -->|Enqueue Join| G
     C -->|Vector Search| H
+    C -->|LLM Chat| K
     G -->|BLPOP join_meet_queue| D
     D -->|Start Container| I
     D -->|Update Status| F
     D -->|Enqueue Transcription| G
     G -->|BLPOP transcription-queue| E
-    E -->|ElevenLabs Scribe| E
-    E -->|Gemini Flash AI| E
-    E -->|Store Embeddings| H
+    E -->|Stream Audio| J
+    E -->|Summarize + Tag + Embed| K
+    E -->|Store Vectors| H
     E -->|Save Results| F
 ```
 
@@ -591,4 +597,4 @@ erDiagram
 
 ---
 
-Built with ❤️ using Turborepo, Node.js, and AI.
+Built with ❤️ using Turborepo, Node.js, and Langchain.
