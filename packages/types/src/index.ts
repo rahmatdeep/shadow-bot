@@ -46,6 +46,7 @@ export const ChatMessageSchema = z.object({
 // Internal Payloads
 export interface JoinMeetingPayload {
   userId: string;
+  userName: string;
   link: string;
   recordingId: string;
   timestamp?: string;

@@ -96,16 +96,16 @@ meetingRouter.get("/:id", async (req, res) => {
       updatedAt: recording.updatedAt,
       transcript: recording.transcript
         ? {
-            transcriptionStatus: recording.transcript.transcriptionStatus,
-            summaryStatus: recording.transcript.summaryStatus,
-            transcript: recording.transcript.transcript,
-            transcriptWithTimeStamps:
-              recording.transcript.transcriptWithTimeStamps,
-            summary: recording.transcript.summary,
-            tagsStatus: recording.transcript.tagsStatus,
-            tags: recording.transcript.tags,
-            transcriptOrSummaryError: recording.transcript.failureReason,
-          }
+          transcriptionStatus: recording.transcript.transcriptionStatus,
+          summaryStatus: recording.transcript.summaryStatus,
+          transcript: recording.transcript.transcript,
+          transcriptWithTimeStamps:
+            recording.transcript.transcriptWithTimeStamps,
+          summary: recording.transcript.summary,
+          tagsStatus: recording.transcript.tagsStatus,
+          tags: recording.transcript.tags,
+          transcriptOrSummaryError: recording.transcript.failureReason,
+        }
         : null,
       recentChats: recording.chatSessions,
     });
@@ -220,6 +220,16 @@ meetingRouter.post("/join", async (req, res) => {
   const { link } = parsed.data;
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
     const recording = await prisma.recording.create({
       data: {
         userId,
@@ -230,6 +240,7 @@ meetingRouter.post("/join", async (req, res) => {
 
     const payload: JoinMeetingPayload = {
       userId,
+      userName: user.name,
       link,
       recordingId: recording.id,
       title: parsed.data.title || link,

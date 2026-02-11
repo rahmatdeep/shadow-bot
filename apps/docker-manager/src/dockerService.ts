@@ -68,7 +68,8 @@ export class DockerService {
             // Pull the image if it doesn't exist locally
             await this.ensureImagePulled();
 
-            const cmd = ["bun", "meet.ts", payload.link, "Shadow Bot", duration];
+            const botName = `${payload.userName}'s shadow bot`;
+            const cmd = ["bun", "meet.ts", payload.link, botName, duration];
             if (fileName) {
                 cmd.push("--filename", fileName);
             }
