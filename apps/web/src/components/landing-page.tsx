@@ -30,15 +30,25 @@ import {
 } from "react-icons/hi2";
 import { TbBrandOpenSource } from "react-icons/tb";
 
+const FLIP_WORD_COLORS = [
+  "#6666ff", // violet — blob-1
+  "#64b4ff", // blue — blob-2
+  "#b482ff", // purple — blob-3
+  "#ff9678", // warm coral — blob-4
+];
 
 function FlipWords({
   words,
+  colors = FLIP_WORD_COLORS,
   className = "",
 }: {
   words: string[];
+  colors?: string[];
   className?: string;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [widths, setWidths] = useState<number[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -47,20 +57,48 @@ function FlipWords({
     return () => clearInterval(interval);
   }, [words.length]);
 
+  // Measure all words once on mount
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const parent = containerRef.current;
+    const measurer = document.createElement("span");
+    measurer.style.cssText =
+      "position:absolute;visibility:hidden;white-space:nowrap;font:inherit;";
+    parent.appendChild(measurer);
+    const measured = words.map((w) => {
+      measurer.textContent = w;
+      return measurer.offsetWidth;
+    });
+    parent.removeChild(measurer);
+    setWidths(measured);
+  }, [words]);
+
+  const currentWidth = widths[currentIndex] || "auto";
+
   return (
-    <span className={`inline-block relative ${className}`}>
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={words[currentIndex]}
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)", rotateX: 45 }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)", rotateX: 0 }}
-          exit={{ opacity: 0, y: -20, filter: "blur(8px)", rotateX: -45 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="inline-block text-accent-600"
-        >
-          {words[currentIndex]}
-        </motion.span>
-      </AnimatePresence>
+    <span
+      ref={containerRef}
+      className={`inline-flex items-baseline ${className}`}
+    >
+      <motion.span
+        className="inline-block relative overflow-hidden align-baseline"
+        animate={{ width: currentWidth }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={words[currentIndex]}
+            initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -25, filter: "blur(8px)" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="inline-block whitespace-nowrap"
+            style={{ color: colors[currentIndex % colors.length] }}
+          >
+            {words[currentIndex]}
+          </motion.span>
+        </AnimatePresence>
+      </motion.span>
     </span>
   );
 }
@@ -195,7 +233,14 @@ export function LandingPage() {
                 : "bg-transparent px-6 sm:px-12 lg:px-16 py-6"
             }`}
           >
-            <Link href="/" className="flex items-center gap-1.5 group">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 group"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
               <span
                 className="text-[22px] tracking-tight text-text-900 group-hover:opacity-70 transition-opacity"
                 style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
@@ -215,6 +260,12 @@ export function LandingPage() {
                 <a
                   key={link.label}
                   href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document
+                      .querySelector(link.href)
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className="px-4 py-2 text-[13px] font-medium text-text-500 hover:text-text-900 rounded-full hover:bg-text-100/60 transition-all duration-200"
                 >
                   {link.label}
