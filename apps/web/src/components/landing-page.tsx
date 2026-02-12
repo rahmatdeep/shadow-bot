@@ -1,9 +1,12 @@
 "use client";
 
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Video, FileText, Sparkles, ArrowRight, Bot } from "lucide-react";
+import { Video, FileText, Sparkles, ArrowRight } from "lucide-react";
+import { RiGhostSmileLine, RiGithubFill, RiSearchLine } from "react-icons/ri";
+
 import Link from "next/link";
 import { useRef } from "react";
+import { GoHeartFill } from "react-icons/go";
 
 export function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,8 +56,8 @@ export function LandingPage() {
             transition={{ delay: 0.2 }}
             className="flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-lg">
-              <Bot className="text-white w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-600 to-primary-700 flex items-center justify-center shadow-lg">
+              <RiGhostSmileLine className="text-white w-5 h-5" />
             </div>
             <span className="text-lg font-extrabold tracking-tight text-text-900">
               Shadow Bot
@@ -92,7 +95,7 @@ export function LandingPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 text-xs font-bold text-primary-800"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-200/10 border border-primary-500/20 text-xs font-bold text-primary-600"
           >
             <Sparkles className="w-3 h-3" /> AI-Powered Meeting Assistant
           </motion.div>
@@ -116,8 +119,9 @@ export function LandingPage() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-xl md:text-2xl text-text-700 max-w-3xl mx-auto font-medium leading-relaxed"
           >
-            Shadow Bot joins your meetings, records everything, and delivers
-            transcripts and AI summaries—so you can focus on the conversation.
+            Shadow Bot silently joins your meetings, records it, and delivers
+            instant transcripts, AI summaries, and semantic search, powered by
+            Gemini and ElevenLabs.
           </motion.p>
 
           <motion.div
@@ -132,9 +136,14 @@ export function LandingPage() {
             >
               Get Started Free <ArrowRight className="w-4 h-4" />
             </Link>
-            <button className="px-8 py-4 bg-secondary-200 border border-text-900/10 text-text-900 rounded-xl text-base font-bold hover:bg-secondary-300 transition-all">
-              Watch Demo
-            </button>
+            <Link
+              href="https://github.com/rahmatdeep/shadow-bot"
+              target="_blank"
+              className="px-8 py-4 bg-white border border-text-900/10 text-primary-600 rounded-xl text-base font-bold hover:bg-primary-50 transition-all inline-flex items-center justify-center gap-2 group"
+            >
+              <RiGithubFill className="w-5 h-5 text-primary-600 group-hover:text-primary-800 transition-colors" />
+              View on GitHub
+            </Link>
           </motion.div>
 
           {/* Hero Visual with Scroll Animation */}
@@ -160,7 +169,7 @@ export function LandingPage() {
       </section>
 
       {/* Features Section with Stagger */}
-      <section className="py-32 px-6 bg-secondary-100">
+      <section className="py-32 px-6 bg-secondary-50">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -177,28 +186,35 @@ export function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {[
               {
                 icon: Video,
                 title: "Auto Recording",
-                desc: "Bot joins your Google Meet, Zoom, or Teams calls automatically and captures everything in high quality.",
+                desc: "Bot joins your Google Meet automatically and captures everything in high quality.",
                 active: true,
                 delay: 0.1,
               },
               {
                 icon: FileText,
                 title: "AI Transcription",
-                desc: "Searchable, speaker-labeled transcripts with timestamps. Find any moment instantly.",
-                active: false,
+                desc: "ElevenLabs Scribe v2 delivers high-fidelity transcripts with near-perfect accuracy.",
+                active: true,
                 delay: 0.2,
               },
               {
                 icon: Sparkles,
                 title: "Smart Summaries",
-                desc: "AI extracts key points, action items, and decisions. Skip the replay, get straight to what matters.",
-                active: false,
+                desc: "Multi-stage Gemini Flash pipeline extracts structured action items, decisions, and detailed prose summaries.",
+                active: true,
                 delay: 0.3,
+              },
+              {
+                icon: RiSearchLine,
+                title: "Semantic Search",
+                desc: "Find what you need with vector search. Ask 'What was the budget?' and get answers from all your meetings.",
+                active: true,
+                delay: 0.4,
               },
             ].map((feature, idx) => (
               <motion.div
@@ -220,16 +236,24 @@ export function LandingPage() {
                   </div>
                 )}
                 <div
-                  className={`w-14 h-14 rounded-xl ${feature.active ? "bg-linear-to-br from-primary-600 to-primary-800" : "bg-secondary-200 border border-text-900/10"} flex items-center justify-center shadow-md`}
+                  className={`w-14 h-14 rounded-xl ${feature.active ? "bg-linear-to-br from-primary-600 to-primary-700" : "bg-secondary-200 border border-text-900/10"} flex items-center justify-center shadow-md`}
                 >
-                  <feature.icon
-                    className={`w-7 h-7 ${feature.active ? "text-white" : "text-text-600"}`}
-                  />
+                  {feature.icon === RiSearchLine ? (
+                    <RiSearchLine
+                      className={`w-7 h-7 ${feature.active ? "text-white" : "text-text-600"}`}
+                    />
+                  ) : (
+                    <feature.icon
+                      className={`w-7 h-7 ${feature.active ? "text-white" : "text-text-600"}`}
+                    />
+                  )}
                 </div>
-                <h3 className="text-2xl font-bold text-text-900">
-                  {feature.title}
-                </h3>
-                <p className="text-text-700 leading-relaxed">{feature.desc}</p>
+                <div>
+                  <h3 className="text-2xl font-bold text-text-900 mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-text-700 leading-relaxed">{feature.desc}</p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -237,7 +261,7 @@ export function LandingPage() {
       </section>
 
       {/* How It Works - Scrollytelling */}
-      <section className="py-32 px-6 bg-secondary-50">
+      <section className="py-32 px-6 bg-secondary-100">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -273,11 +297,10 @@ export function LandingPage() {
                   1
                 </div>
                 <h3 className="text-3xl font-bold text-text-900">
-                  Paste your meeting link
+                  Paste your meeting link   
                 </h3>
                 <p className="text-lg text-text-700 leading-relaxed">
-                  Copy your Google Meet or Zoom URL and paste it into Shadow
-                  Bot. That's it.
+                  Copy your Google Meet and paste it into Shadow Bot. That's it.
                 </p>
               </motion.div>
               <motion.div
@@ -288,7 +311,7 @@ export function LandingPage() {
                 className="flex-1 bg-white border border-text-900/10 rounded-xl p-6 h-48 flex items-center justify-center shadow-md"
               >
                 <div className="w-full h-12 bg-secondary-100 rounded-lg flex items-center px-4 gap-3 border border-text-900/5">
-                  <Video className="w-5 h-5 text-text-600" />
+                  <Video className="w-5 h-5 text-primary-600" />
                   <div className="h-2 flex-1 bg-secondary-200 rounded-full" />
                 </div>
               </motion.div>
@@ -315,8 +338,8 @@ export function LandingPage() {
                   Bot joins and records
                 </h3>
                 <p className="text-lg text-text-700 leading-relaxed">
-                  Shadow Bot enters the call, introduces itself, and starts
-                  capturing everything silently.
+                  Shadow Bot enters the call and starts capturing everything
+                  silently.
                 </p>
               </motion.div>
               <motion.div
@@ -328,7 +351,7 @@ export function LandingPage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-linear-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-md">
-                    <Bot className="w-6 h-6 text-white" />
+                    <RiGhostSmileLine className="w-6 h-6 text-white" />
                   </div>
                   <div className="space-y-2">
                     <div className="h-2 w-32 bg-secondary-200 rounded-full" />
@@ -362,8 +385,8 @@ export function LandingPage() {
                   Get your insights
                 </h3>
                 <p className="text-lg text-text-700 leading-relaxed">
-                  Access the video, transcript, and AI summary in your
-                  dashboard. Share with your team instantly.
+                  Receive structured summaries, tags, and valid JSON outputs.
+                  Share with your team instantly.
                 </p>
               </motion.div>
               <motion.div
@@ -397,7 +420,7 @@ export function LandingPage() {
           className="max-w-4xl mx-auto text-center space-y-8"
         >
           <h2 className="text-5xl md:text-6xl font-extrabold text-text-900 leading-tight">
-            Ready to transform your meetings?
+            Ready to leverage your meetings?
           </h2>
           <p className="text-2xl text-text-700">
             Join teams who never miss a detail
@@ -426,61 +449,21 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 border-t border-text-900/10 bg-secondary-50">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-md">
-                <Bot className="text-white w-5 h-5" />
-              </div>
-              <span className="text-lg font-extrabold text-text-900">
-                Shadow Bot
-              </span>
-            </div>
-            <p className="text-sm text-text-600 leading-relaxed max-w-xs">
-              AI-powered meeting assistant for teams who value clarity and
-              productivity.
-            </p>
-          </div>
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-text-900 uppercase tracking-wider">
-              Platform
-            </h4>
-            <ul className="text-sm space-y-2 text-text-700">
-              <li>
-                <Link
-                  href="/"
-                  className="hover:text-text-900 transition-colors"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/login"
-                  className="hover:text-text-900 transition-colors"
-                >
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/signup"
-                  className="hover:text-text-900 transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-3 md:text-right">
-            <h4 className="text-xs font-bold text-text-900 uppercase tracking-wider">
-              Contact
-            </h4>
-            <p className="text-sm text-text-700">support@shadowbot.ai</p>
-            <p className="text-xs text-text-500 pt-8">
-              © 2026 Shadow Bot. All rights reserved.
-            </p>
+      <footer className="py-4 bg-primary-500/10">
+        <div className="max-w-7xl mx-auto px-6 flex justify-center">
+          <div className="flex items-center gap-2 text-sm text-text-500">
+            <span>Made with</span>
+            <span className="text-primary-600">
+              <GoHeartFill />
+            </span>
+            <span>by</span>
+            <Link
+              href="https://github.com/rahmatdeep"
+              className="text-primary-600 font-bold hover:underline"
+              target="_blank"
+            >
+              @rahmatdeep
+            </Link>
           </div>
         </div>
       </footer>
