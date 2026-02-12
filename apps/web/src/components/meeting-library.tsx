@@ -206,40 +206,57 @@ export function MeetingLibrary({ session }: { session: any }) {
       {/* ─── Header ─── */}
       <header className="sticky top-0 z-30 bg-secondary-100/80 backdrop-blur-2xl border-b border-text-200/30">
         <div className="max-w-6xl mx-auto w-full px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => router.push("/")}
-              className="flex items-center gap-2 text-text-400 hover:text-text-700 transition-colors group"
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            <span
+              className="text-xl tracking-tight text-text-900"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
             >
-              <RiArrowLeftLine className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              <span className="text-sm font-medium">Back</span>
-            </button>
-            <div className="h-5 w-px bg-text-200/50" />
-            <div className="flex items-center gap-1.5">
-              <span
-                className="text-lg tracking-tight text-text-900"
-                style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
-              >
-                Library
-              </span>
-            </div>
-          </div>
+              Shadow
+            </span>
+            <span className="text-xl font-semibold tracking-tight text-text-500">
+              Bot
+            </span>
+          </button>
 
           <div className="flex items-center gap-3">
+            {/* AI Chat Button */}
             <button
               onClick={() => router.push("/chat")}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-text-600 hover:text-text-900 bg-white/60 border border-text-200/50 hover:border-text-300 hover:shadow-sm transition-all active:scale-[0.97]"
+              className="hidden md:block btn-animated-border group"
             >
-              <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
-              AI Chat
+              <div className="spin-gradient" />
+              <span className="relative z-10 block px-4 py-2 rounded-full bg-secondary-100/90 backdrop-blur-xl">
+                <span className="flex items-center gap-2 font-semibold text-sm text-text-600 group-hover:text-text-900 transition-colors duration-300">
+                  <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                  AI Chat
+                </span>
+              </span>
             </button>
 
+            {/* Join Meeting Button */}
             <button
               onClick={() => router.push("/")}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white bg-text-900 hover:bg-text-800 transition-all active:scale-[0.97] shadow-sm"
+              className="group relative hidden md:flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white bg-text-900 hover:bg-text-800 transition-all overflow-hidden active:scale-[0.97] shadow-xl shadow-text-900/10"
             >
-              <RiVideoOnLine className="w-4 h-4" />
-              Join Meeting
+              {/* Shimmer sweep overlay */}
+              <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                    animation: "shimmer-slide 3s ease-in-out infinite",
+                  }}
+                />
+              </span>
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+              <span className="relative z-10 flex items-center gap-2">
+                <RiVideoOnLine className="w-4 h-4" />
+                Join Meeting
+              </span>
             </button>
 
             <div className="h-5 w-px bg-text-200/40 mx-1" />
@@ -297,10 +314,25 @@ export function MeetingLibrary({ session }: { session: any }) {
             </p>
             <button
               onClick={() => router.push("/")}
-              className="px-6 py-3 bg-text-900 text-white rounded-full font-semibold hover:bg-text-800 transition-all shadow-md shadow-text-900/10 active:scale-95 flex items-center gap-2.5 mx-auto text-sm"
+              className="group relative overflow-hidden bg-text-900 text-white px-6 py-3 rounded-full font-semibold transition-all shadow-xl shadow-text-900/10 active:scale-95 flex items-center gap-2.5 mx-auto text-sm"
             >
-              <RiSparklingLine className="w-4 h-4" />
-              Record First Meeting
+              {/* Shimmer sweep overlay */}
+              <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                    animation: "shimmer-slide 3s ease-in-out infinite",
+                  }}
+                />
+              </span>
+              {/* Accent underline glow */}
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+              <span className="relative z-10 flex items-center gap-2.5">
+                <RiSparklingLine className="w-4 h-4" />
+                Record First Meeting
+              </span>
             </button>
           </div>
         ) : (
