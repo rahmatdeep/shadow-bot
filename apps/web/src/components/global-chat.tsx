@@ -146,20 +146,40 @@ export function GlobalChat({ session }: { session: any }) {
 
   return (
     <div className="flex h-screen bg-secondary-100 overflow-hidden relative">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-200/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-200/5 rounded-full blur-[120px]" />
+      {/* Aurora Mesh Shader Background */}
+      <div className="aurora-mesh opacity-40">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="blob blob-3" />
+        <div className="blob blob-4" />
+        <div className="blob blob-5" />
       </div>
 
-      {/* Dot grid */}
+      {/* Fine Noise Grid */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.02]"
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
         style={{
-          backgroundImage: "radial-gradient(circle, #111 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          backgroundImage:
+            "radial-gradient(circle, #111 0.8px, transparent 0.8px)",
+          backgroundSize: "20px 20px",
         }}
       />
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 rounded-full bg-accent-400/30"
+            style={{
+              left: `${15 + i * 14}%`,
+              bottom: `${-5 - i * 3}%`,
+              animation: `float-particle ${12 + i * 3}s ease-in-out infinite`,
+              animationDelay: `${i * 2.5}s`,
+            }}
+          />
+        ))}
+      </div>
 
       {/* ─── Sidebar ─── */}
       <AnimatePresence mode="wait">
@@ -191,10 +211,26 @@ export function GlobalChat({ session }: { session: any }) {
             <div className="px-4 py-3">
               <button
                 onClick={startNewChat}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-text-200/50 text-text-700 rounded-xl font-medium text-sm hover:border-text-300 hover:shadow-sm transition-all active:scale-[0.97] group"
+                className="w-full h-11 relative overflow-hidden bg-text-900 text-white rounded-xl font-semibold text-sm shadow-md hover:bg-text-800 active:scale-[0.97] transition-all flex items-center justify-center gap-2.5 group"
               >
-                <RiAddLine className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                New Chat
+                {/* Shimmer sweep overlay */}
+                <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+                  <span
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                      animation: "shimmer-slide 3s ease-in-out infinite",
+                    }}
+                  />
+                </span>
+                {/* Accent underline glow */}
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+
+                <span className="relative z-10 flex items-center gap-2">
+                  <RiAddLine className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                  New Chat
+                </span>
               </button>
             </div>
 
@@ -317,7 +353,7 @@ export function GlobalChat({ session }: { session: any }) {
                     <h1
                       className="text-5xl md:text-6xl text-text-900 tracking-tight"
                       style={{
-                        fontFamily: "var(--font-dm-serif), Georgia, serif",
+                        fontFamily: "var(--font-heading), Georgia, serif",
                       }}
                     >
                       Hey, {session?.user?.name?.split(" ")[0] || "there"}
@@ -336,7 +372,7 @@ export function GlobalChat({ session }: { session: any }) {
                       <button
                         key={i}
                         onClick={() => setInput(example)}
-                        className="px-4 py-2 bg-white/70 backdrop-blur-md hover:bg-white rounded-xl border border-text-200/50 text-sm text-text-500 font-medium transition-all hover:scale-[1.02] hover:border-text-300 hover:shadow-sm hover:text-text-700"
+                        className="px-4 py-2 bg-white/70 backdrop-blur-md hover:bg-white rounded-xl border border-text-200/50 text-sm text-text-500 font-medium transition-all hover:scale-[1.02] hover:border-text-300 hover:shadow-sm hover:text-text-700 active:scale-95 cursor-pointer"
                       >
                         {example}
                       </button>
@@ -366,10 +402,10 @@ export function GlobalChat({ session }: { session: any }) {
                         className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 ${
+                          className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 shadow-sm transition-all ${
                             msg.role === "user"
                               ? "bg-text-900 text-white font-medium shadow-md"
-                              : "bg-white/80 border border-text-200/40 text-text-800 shadow-sm"
+                              : "bg-white/80 backdrop-blur-sm border border-text-200/40 text-text-800"
                           }`}
                         >
                           {msg.role === "assistant" ? (
@@ -425,11 +461,10 @@ export function GlobalChat({ session }: { session: any }) {
               <AnimatePresence>
                 {isFocused && (
                   <motion.div
-                    layoutId="input-spotlight"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{
-                      opacity: 0.25,
-                      scale: [1, 1.03, 1],
+                      opacity: 0.5,
+                      scale: [1, 1.05, 1],
                     }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{
@@ -440,7 +475,7 @@ export function GlobalChat({ session }: { session: any }) {
                         ease: "easeInOut",
                       },
                     }}
-                    className="absolute -inset-6 rounded-[3rem] bg-linear-to-r from-accent-300/15 via-blue-300/10 to-violet-300/15 blur-2xl pointer-events-none"
+                    className="absolute -inset-10 rounded-[3rem] bg-linear-to-r from-accent-400/20 via-blue-400/10 to-violet-400/20 blur-[60px] pointer-events-none"
                   />
                 )}
               </AnimatePresence>
@@ -448,10 +483,10 @@ export function GlobalChat({ session }: { session: any }) {
               <motion.form
                 layout
                 onSubmit={handleSend}
-                className={`relative bg-white/90 backdrop-blur-xl rounded-2xl flex items-center px-5 py-3 border transition-all duration-300 ${
+                className={`relative bg-white/95 backdrop-blur-xl rounded-2xl flex items-center px-5 py-3.5 border transition-all duration-500 ${
                   isFocused
-                    ? "border-accent-400/30 ring-4 ring-accent-500/5 shadow-xl"
-                    : "border-text-200/50 shadow-lg shadow-text-900/4"
+                    ? "border-accent-400/50 ring-8 ring-accent-500/5"
+                    : "border-text-200/60 shadow-lg shadow-text-900/4"
                 }`}
               >
                 <input
@@ -467,14 +502,27 @@ export function GlobalChat({ session }: { session: any }) {
                       ? "Ask a follow-up…"
                       : "Ask anything about your meetings…"
                   }
-                  className="flex-1 bg-transparent outline-none text-base font-medium text-text-900 placeholder:text-text-300"
+                  className="flex-1 bg-transparent outline-none text-lg font-medium text-text-900 placeholder:text-text-300 tracking-tight"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="ml-3 w-10 h-10 rounded-xl bg-text-900 hover:bg-text-800 disabled:bg-text-200 disabled:cursor-not-allowed flex items-center justify-center transition-all active:scale-95 shadow-sm"
+                  className="ml-3 w-11 h-11 rounded-xl bg-text-900 hover:bg-text-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all active:scale-95 shadow-md relative overflow-hidden group/send"
                 >
-                  <RiSendPlaneFill className="w-4 h-4 text-white" />
+                  {/* Shimmer for button */}
+                  <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none opacity-0 group-hover/send:opacity-100 transition-opacity">
+                    <span
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                        animation: "shimmer-slide 3s ease-in-out infinite",
+                      }}
+                    />
+                  </span>
+                  <RiSendPlaneFill
+                    className={`w-5 h-5 text-white relative z-10 transition-transform ${input.trim() && !isLoading ? "group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5" : ""}`}
+                  />
                 </button>
               </motion.form>
 
