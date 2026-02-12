@@ -207,11 +207,39 @@ export function Dashboard({ session }: { session: any }) {
 
   return (
     <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-accent-500/20 relative flex flex-col overflow-hidden">
-      {/* Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-accent-200/10 rounded-full blur-[140px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-violet-200/10 rounded-full blur-[100px]" />
-        <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] bg-orange-200/8 rounded-full blur-[120px]" />
+      {/* Aurora Mesh Shader Background */}
+      <div className="aurora-mesh">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="blob blob-3" />
+        <div className="blob blob-4" />
+        <div className="blob blob-5" />
+      </div>
+
+      {/* Fine Noise Grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #111 0.8px, transparent 0.8px)",
+          backgroundSize: "20px 20px",
+        }}
+      />
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 rounded-full bg-accent-400/30"
+            style={{
+              left: `${15 + i * 14}%`,
+              bottom: `${-5 - i * 3}%`,
+              animation: `float-particle ${12 + i * 3}s ease-in-out infinite`,
+              animationDelay: `${i * 2.5}s`,
+            }}
+          />
+        ))}
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen relative z-10">
@@ -245,10 +273,10 @@ export function Dashboard({ session }: { session: any }) {
           <div className="space-y-4 relative">
             <button
               onClick={openModal}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-text-200/60 shadow-sm mb-4 hover:bg-white transition-colors cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-2.5 px-4 py-2 bg-white/70 backdrop-blur-md rounded-full border border-text-200/50 shadow-sm mb-4 hover:bg-white transition-all cursor-pointer active:scale-95 group"
             >
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs font-medium text-text-500 uppercase tracking-widest">
+              <RiPulseLine className="w-4 h-4 text-accent-600 animate-pulse" />
+              <span className="text-[13px] font-medium text-text-600">
                 Public Beta
               </span>
             </button>
@@ -275,7 +303,7 @@ export function Dashboard({ session }: { session: any }) {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{
                     opacity: 0.5,
-                    scale: [1, 1.03, 1],
+                    scale: [1, 1.05, 1],
                   }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{
@@ -286,7 +314,7 @@ export function Dashboard({ session }: { session: any }) {
                       ease: "easeInOut",
                     },
                   }}
-                  className="absolute -inset-8 rounded-[3rem] bg-linear-to-r from-accent-300/15 via-blue-300/10 to-violet-300/15 blur-[50px] pointer-events-none"
+                  className="absolute -inset-10 rounded-[3rem] bg-linear-to-r from-accent-400/20 via-blue-400/10 to-violet-400/20 blur-[60px] pointer-events-none"
                 />
               )}
             </AnimatePresence>
@@ -296,12 +324,12 @@ export function Dashboard({ session }: { session: any }) {
               animate={{
                 scale: isFocused ? 1.01 : 1,
                 boxShadow: isFocused
-                  ? "0 20px 60px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(51,51,204,0.1)"
+                  ? "0 25px 70px -12px rgba(102,102,255,0.12), 0 0 0 1px rgba(102,102,255,0.2)"
                   : "0 8px 30px -12px rgba(0,0,0,0.06)",
               }}
-              className={`relative bg-white/90 backdrop-blur-xl rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center p-2 sm:p-2.5 border transition-all duration-500 ${
+              className={`relative bg-white/95 backdrop-blur-xl rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center p-2 sm:p-2.5 border transition-all duration-500 ${
                 isFocused
-                  ? "border-accent-400/30 ring-4 ring-accent-500/5"
+                  ? "border-accent-400/50 ring-8 ring-accent-500/5"
                   : "border-text-200/60"
               }`}
             >
@@ -340,15 +368,31 @@ export function Dashboard({ session }: { session: any }) {
                     <button
                       onClick={handleInvite}
                       disabled={isDeploying || !!activeBotContainerId}
-                      className="w-full h-14 rounded-xl bg-text-900 text-white font-semibold shadow-md shadow-text-900/10 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
+                      className="w-full h-14 rounded-xl relative overflow-hidden bg-text-900 text-white font-semibold shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
                     >
-                      {isDeploying ? (
-                        <RiSparklingLine className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RiArrowRightLine className="w-5 h-5" />
-                      )}
-                      <span className="text-lg tracking-tight">
-                        {isDeploying ? "Launching..." : "Join Now"}
+                      {/* Shimmer sweep overlay */}
+                      <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+                        <span
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                            animation: "shimmer-slide 3s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                      {/* Accent underline glow */}
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+
+                      <span className="relative z-10 flex items-center gap-2.5">
+                        {isDeploying ? (
+                          <RiSparklingLine className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RiArrowRightLine className="w-5 h-5" />
+                        )}
+                        <span className="text-lg tracking-tight">
+                          {isDeploying ? "Launching..." : "Join Now"}
+                        </span>
                       </span>
                     </button>
                   </motion.div>
@@ -365,15 +409,31 @@ export function Dashboard({ session }: { session: any }) {
                     <button
                       onClick={handleInvite}
                       disabled={isDeploying || !!activeBotContainerId}
-                      className="h-12 pl-6 pr-8 rounded-xl bg-text-900 text-white font-semibold shadow-md shadow-text-900/10 hover:bg-text-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 whitespace-nowrap"
+                      className="h-12 pl-6 pr-8 rounded-xl relative overflow-hidden bg-text-900 text-white font-semibold shadow-md hover:bg-text-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 whitespace-nowrap group/btn"
                     >
-                      {isDeploying ? (
-                        <RiSparklingLine className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RiArrowRightLine className="w-5 h-5" />
-                      )}
-                      <span className="text-base tracking-tight">
-                        {isDeploying ? "Launching..." : "Join Now"}
+                      {/* Shimmer sweep overlay */}
+                      <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+                        <span
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                            animation: "shimmer-slide 3s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                      {/* Accent underline glow */}
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+
+                      <span className="relative z-10 flex items-center gap-2.5">
+                        {isDeploying ? (
+                          <RiSparklingLine className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RiArrowRightLine className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                        )}
+                        <span className="text-base tracking-tight">
+                          {isDeploying ? "Launching..." : "Join Now"}
+                        </span>
                       </span>
                     </button>
                   </motion.div>
@@ -416,53 +476,89 @@ export function Dashboard({ session }: { session: any }) {
 
           {/* Footer / Links */}
           <div className="pt-16 pb-8 flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0 w-full max-w-lg sm:max-w-none mx-auto">
-            <Link
-              href="/chat"
-              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/10 backdrop-blur-xl rounded-full shadow-sm hover:shadow-lg hover:shadow-text-900/5 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
+            <motion.div
+              whileHover="hover"
+              whileTap="active"
+              initial="initial"
+              className="btn-animated-border group w-full sm:w-auto p-px rounded-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 border border-white/20 hover:border-transparent"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
-                <RiSparklingLine className="w-5 h-5" />
-              </div>
+              <Link
+                href="/chat"
+                className="relative block rounded-full overflow-hidden p-px"
+              >
+                <motion.div
+                  variants={{
+                    initial: { opacity: 0 },
+                    hover: { opacity: 1 },
+                    active: { opacity: 1, scale: 1.05 },
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="spin-gradient"
+                />
+                <div className="relative z-10 flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/90 backdrop-blur-xl rounded-full">
+                  <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
+                    <RiSparklingLine className="w-5 h-5" />
+                  </div>
 
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
-                  AI Chat
-                </span>
-                <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
-                  Ask Across Meetings
-                </span>
-              </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
+                      AI Chat
+                    </span>
+                    <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
+                      Ask Across Meetings
+                    </span>
+                  </div>
 
-              <div className="pl-2">
-                <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
-                  <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                  <div className="pl-2">
+                    <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
+                      <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
 
-            <Link
-              href="/library"
-              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/10 backdrop-blur-xl rounded-full shadow-sm hover:shadow-lg hover:shadow-text-900/5 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
+            <motion.div
+              whileHover="hover"
+              whileTap="active"
+              initial="initial"
+              className="btn-animated-border group w-full sm:w-auto p-px rounded-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 border border-white/20 hover:border-transparent"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
-                <RiHistoryLine className="w-5 h-5" />
-              </div>
+              <Link
+                href="/library"
+                className="relative block rounded-full overflow-hidden p-px"
+              >
+                <motion.div
+                  variants={{
+                    initial: { opacity: 0 },
+                    hover: { opacity: 1 },
+                    active: { opacity: 1, scale: 1.05 },
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="spin-gradient"
+                />
+                <div className="relative z-10 flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/90 backdrop-blur-xl rounded-full">
+                  <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
+                    <RiHistoryLine className="w-5 h-5" />
+                  </div>
 
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
-                  Library
-                </span>
-                <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
-                  View Past Meetings
-                </span>
-              </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
+                      Library
+                    </span>
+                    <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
+                      View Past Meetings
+                    </span>
+                  </div>
 
-              <div className="pl-2">
-                <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
-                  <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                  <div className="pl-2">
+                    <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
+                      <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </div>
