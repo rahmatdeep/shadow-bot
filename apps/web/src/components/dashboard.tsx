@@ -230,24 +230,27 @@ export function Dashboard({ session }: { session: any }) {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen relative z-10">
-        {/* Brand Header */}
+        {/* Global Header Container */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-8 sm:top-12 left-6 sm:left-12 flex items-center gap-2 group cursor-default"
+          className="absolute top-6 sm:top-10 left-0 right-0 px-6 sm:px-12 flex justify-between items-center z-50 pointer-events-none"
         >
-          <div className="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:rotate-6 transition-transform">
-            <RiGhostSmileLine className="w-5 h-5" />
+          {/* Brand Branding */}
+          <div className="flex items-center gap-2 group cursor-default pointer-events-auto">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:rotate-6 transition-transform">
+              <RiGhostSmileLine className="w-5 h-5" />
+            </div>
+            <span className="font-black text-xl tracking-tighter text-text-900">
+              Shadow Bot
+            </span>
           </div>
-          <span className="font-black text-xl tracking-tighter text-text-900">
-            Shadow Bot
-          </span>
-        </motion.div>
 
-        {/* User Profile Badge */}
-        <div className="absolute top-8 sm:top-12 right-6 sm:right-12">
-          <UserProfileBadge user={session?.user} />
-        </div>
+          {/* User Profile Badge */}
+          <div className="pointer-events-auto">
+            <UserProfileBadge user={session?.user} />
+          </div>
+        </motion.div>
 
         <div className="w-full max-w-4xl text-center space-y-12">
           {/* Hero Content */}
@@ -332,42 +335,68 @@ export function Dashboard({ session }: { session: any }) {
                   ? "0 30px 60px -12px rgba(61,40,23,0.15), 0 0 40px 0 rgba(193,81,19,0.1)"
                   : "0 20px 40px -12px rgba(61,40,23,0.1)",
               }}
-              className={`relative bg-white/80 backdrop-blur-xl rounded-2xl flex items-center p-2.5 border transition-all duration-500 ${
+              className={`relative bg-white/80 backdrop-blur-xl rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center p-2 sm:p-2.5 border transition-all duration-500 ${
                 isFocused
                   ? "border-primary-400/50 ring-4 ring-primary-500/10"
                   : "border-text-900/5"
               }`}
             >
-              <div
-                className={`pl-5 pr-3 transition-colors duration-500 ${isFocused ? "text-primary-600" : "text-text-300"}`}
-              >
-                <Video className="w-6 h-6" />
+              <div className="flex items-center flex-1">
+                <div
+                  className={`pl-5 pr-3 transition-colors duration-500 ${isFocused ? "text-primary-600" : "text-text-300"}`}
+                >
+                  <Video className="w-6 h-6" />
+                </div>
+
+                <input
+                  ref={inputRef}
+                  value={meetLink}
+                  onChange={(e) => handleMeetLinkChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleInvite();
+                    }
+                  }}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  disabled={isDeploying}
+                  className="flex-1 h-14 bg-transparent outline-none text-lg md:text-xl font-bold text-text-900 placeholder:text-text-200 placeholder:font-bold tracking-tight min-w-0"
+                  placeholder="meet.google.com/xxx-yyyy"
+                />
               </div>
 
-              <input
-                ref={inputRef}
-                value={meetLink}
-                onChange={(e) => handleMeetLinkChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleInvite();
-                  }
-                }}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                disabled={isDeploying}
-                className="flex-1 h-14 bg-transparent outline-none text-lg md:text-xl font-bold text-text-900 placeholder:text-text-200 placeholder:font-bold tracking-tight"
-                placeholder="meet.google.com/xxx-yyyy-zzz"
-              />
-
               <AnimatePresence>
+                {(meetLink.length > 5 || isDeploying) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                    animate={{ height: "auto", opacity: 1, marginTop: 8 }}
+                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                    className="sm:hidden overflow-hidden"
+                  >
+                    <button
+                      onClick={handleInvite}
+                      disabled={isDeploying || !!activeBotContainerId}
+                      className="w-full h-14 rounded-xl bg-primary-600 text-white font-bold shadow-lg shadow-primary-600/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
+                    >
+                      {isDeploying ? (
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-5 h-5" />
+                      )}
+                      <span className="text-lg tracking-tight">
+                        {isDeploying ? "Launching..." : "Join Now"}
+                      </span>
+                    </button>
+                  </motion.div>
+                )}
+
                 {(meetLink.length > 5 || isDeploying) && (
                   <motion.div
                     initial={{ width: 0, opacity: 0, marginLeft: 0 }}
                     animate={{ width: "auto", opacity: 1, marginLeft: 8 }}
                     exit={{ width: 0, opacity: 0, marginLeft: 0 }}
                     transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                    className="overflow-hidden"
+                    className="hidden sm:block overflow-hidden"
                   >
                     <button
                       onClick={handleInvite}
@@ -423,10 +452,10 @@ export function Dashboard({ session }: { session: any }) {
           </div>
 
           {/* Footer / Links */}
-          <div className="pt-16 pb-8 flex gap-4 justify-center">
+          <div className="pt-16 pb-8 flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0 w-full max-w-lg sm:max-w-none mx-auto">
             <Link
               href="/chat"
-              className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"
+              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center text-text-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
                 <Sparkles className="w-5 h-5" />
@@ -450,7 +479,7 @@ export function Dashboard({ session }: { session: any }) {
 
             <Link
               href="/library"
-              className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"
+              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center text-text-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
                 <History className="w-5 h-5" />
@@ -486,7 +515,7 @@ export function Dashboard({ session }: { session: any }) {
           >
             <div
               onClick={() => (window.location.href = "/library")}
-              className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-primary-200/40 shadow-2xl shadow-text-900/10 rounded-full px-6 py-3.5 flex items-center gap-6 cursor-pointer group hover:scale-[1.02] hover:bg-white transition-all duration-300 ring-1 ring-black/5"
+              className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-primary-200/40 shadow-2xl shadow-text-900/10 rounded-full px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center gap-3 sm:gap-6 cursor-pointer group hover:scale-[1.02] hover:bg-white transition-all duration-300 ring-1 ring-black/5 max-w-[95vw] sm:max-w-none"
             >
               {(() => {
                 const statusConfig = getMeetingStatus(
@@ -506,16 +535,16 @@ export function Dashboard({ session }: { session: any }) {
                       </span>
                     </div>
 
-                    <div className="h-4 w-px bg-text-200" />
+                    <div className="h-4 w-px bg-text-200 shrink-0" />
 
-                    <div className="flex items-center gap-2 text-text-600">
-                      <span className="font-bold text-sm tracking-tight">
+                    <div className="flex items-center gap-2 text-text-600 min-w-0">
+                      <span className="font-bold text-xs sm:text-sm tracking-tight truncate max-w-[120px] sm:max-w-xs">
                         {activeRecording.link ||
                           `Meeting #${activeRecording.id.substring(0, 8)}`}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 pl-2 text-primary-600 font-black text-[10px] uppercase tracking-wider group-hover:underline decoration-2 underline-offset-4 decoration-primary-200">
+                    <div className="flex items-center gap-1.5 pl-2 text-primary-600 font-black text-[10px] uppercase tracking-wider group-hover:underline decoration-2 underline-offset-4 decoration-primary-200 shrink-0">
                       <span>Open</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />
                     </div>

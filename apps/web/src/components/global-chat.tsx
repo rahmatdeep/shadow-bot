@@ -264,7 +264,7 @@ export function GlobalChat({ session }: { session: any }) {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-8 left-6 right-6 flex items-center justify-between z-30 pointer-events-none"
+              className="absolute top-6 sm:top-10 left-0 right-0 px-6 sm:px-12 flex items-center justify-between z-30 pointer-events-none"
             >
               <div className="flex items-center gap-2 pointer-events-auto">
                 {!isSidebarOpen && (

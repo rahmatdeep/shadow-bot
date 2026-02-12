@@ -16,6 +16,7 @@ interface UserProfileBadgeProps {
 
 export function UserProfileBadge({ user }: UserProfileBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <motion.div
@@ -23,13 +24,17 @@ export function UserProfileBadge({ user }: UserProfileBadgeProps) {
       animate={{ opacity: 1, y: 0 }}
       className="relative z-50"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsOpen(false);
+      }}
     >
       <motion.div
         layout
-        className="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:bg-white/80 transition-all duration-300 cursor-default group"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:bg-white/80 transition-all duration-300 cursor-pointer sm:cursor-default group"
       >
-        <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden border border-primary-200 text-primary-600 shrink-0">
+        <div className="w-9 h-9 rounded-full hbg-primary-100 flex items-center justify-center overflow-hidden border border-primary-200 text-primary-600 shrink-0">
           {user?.image ? (
             <Image
               src={user?.image}
@@ -55,14 +60,17 @@ export function UserProfileBadge({ user }: UserProfileBadgeProps) {
         </div>
 
         <AnimatePresence>
-          {isHovered && (
+          {(isHovered || isOpen) && (
             <motion.button
               initial={{ width: 0, opacity: 0, marginLeft: 0 }}
               animate={{ width: 28, opacity: 1, marginLeft: 8 }}
               exit={{ width: 0, opacity: 0, marginLeft: 0 }}
               transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              onClick={() => signOut()}
-              className="flex items-center justify-center rounded-full text-text-400 hover:text-red-600 hover:bg-red-50 transition-colors overflow-hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                signOut();
+              }}
+              className="flex items-center justify-center rounded-full text-text-400 hover:text-red-600 hover:bg-red-50 transition-colors overflow-hidden shrink-0"
             >
               <LogOut className="w-4 h-4 shrink-0" />
             </motion.button>
