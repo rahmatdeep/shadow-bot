@@ -30,9 +30,7 @@ import {
 } from "react-icons/hi2";
 import { TbBrandOpenSource } from "react-icons/tb";
 
-/* ─────────────────────────────────────────────
-   Flip Words Component (Aceternity-inspired)
-   ───────────────────────────────────────────── */
+
 function FlipWords({
   words,
   className = "",
@@ -223,7 +221,7 @@ export function LandingPage() {
                 </a>
               ))}
               <a
-                href="https://github.com"
+                href="https://github.com/rahmatdeep/shadow-bot"
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 text-[13px] font-medium text-text-500 hover:text-text-900 rounded-full hover:bg-text-100/60 transition-all duration-200 flex items-center gap-1.5"
@@ -253,37 +251,40 @@ export function LandingPage() {
 
       {/* ─── Hero Section with Flip Words ─── */}
       <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-24 relative">
-        {/* Animated ambient glows */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [0.2, 0.35, 0.2],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-[8%] left-1/2 -translate-x-1/2 w-[85%] max-w-4xl h-[55%] bg-linear-to-br from-accent-200/25 via-blue-200/20 to-violet-200/15 rounded-full blur-[150px]"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.2, 0.1] }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 3,
-            }}
-            className="absolute bottom-[5%] right-[10%] w-[35%] h-[30%] bg-linear-to-tr from-orange-200/15 to-amber-200/10 rounded-full blur-[120px]"
-          />
+        {/* Aurora Mesh Shader Background */}
+        <div className="aurora-mesh">
+          <div className="blob blob-1" />
+          <div className="blob blob-2" />
+          <div className="blob blob-3" />
+          <div className="blob blob-4" />
+          <div className="blob blob-5" />
         </div>
 
-        {/* Dot Grid Background */}
+        {/* Fine Noise Grid */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none opacity-[0.025]"
           style={{
             backgroundImage:
-              "radial-gradient(circle, #111 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
+              "radial-gradient(circle, #111 0.8px, transparent 0.8px)",
+            backgroundSize: "20px 20px",
           }}
         />
+
+        {/* Floating Particles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-accent-400/30"
+              style={{
+                left: `${15 + i * 14}%`,
+                bottom: `${-5 - i * 3}%`,
+                animation: `float-particle ${12 + i * 3}s ease-in-out infinite`,
+                animationDelay: `${i * 2.5}s`,
+              }}
+            />
+          ))}
+        </div>
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
@@ -342,7 +343,7 @@ export function LandingPage() {
             moment, and turns conversations into actionable intelligence.
           </motion.p>
 
-          {/* CTAs */}
+          {/* CTAs — The Crazy Ones */}
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
@@ -351,23 +352,48 @@ export function LandingPage() {
               duration: 0.8,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+            className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-2"
           >
+            {/* Primary CTA — Dark with shimmer sweep + glow */}
             <Link
               href="/login"
-              className="group bg-text-900 text-white px-8 py-4 rounded-full font-semibold text-base hover:bg-text-800 active:scale-[0.97] transition-all shadow-lg shadow-text-900/10 flex items-center gap-2.5"
+              className="group relative overflow-hidden bg-text-900 text-white px-9 py-4.5 rounded-full font-semibold text-base active:scale-[0.96] transition-all duration-300 flex items-center gap-2.5 shadow-[0_0_30px_-5px_rgba(102,102,255,0.4)] hover:shadow-[0_0_50px_-5px_rgba(102,102,255,0.6)]"
             >
-              Start Recording Free
-              <RiArrowRightLine className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+              {/* Shimmer sweep overlay */}
+              <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                    animation: "shimmer-slide 3s ease-in-out infinite",
+                  }}
+                />
+              </span>
+              {/* Accent underline glow */}
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+              <span className="relative z-10 flex items-center gap-2.5">
+                Start Recording Free
+                <RiArrowRightLine className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
+              </span>
             </Link>
+
+            {/* Secondary CTA — Rotating gradient border + glassmorphic inner */}
             <a
-              href="https://github.com"
+              href="https://github.com/rahmatdeep/shadow-bot"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-2.5 px-8 py-4 rounded-full font-semibold text-base text-text-700 bg-white/80 backdrop-blur-sm border border-text-200/70 hover:border-text-300 hover:shadow-lg hover:shadow-text-900/5 transition-all duration-200"
+              className="btn-animated-border group"
             >
-              <RiGithubFill className="w-5 h-5" />
-              View on GitHub
+              {/* Spinning gradient disc for animated border */}
+              <div className="spin-gradient" />
+              {/* Glassmorphic inner fill */}
+              <span className="relative z-10 block px-9 py-4 rounded-full bg-secondary-100/90 backdrop-blur-xl">
+                <span className="flex items-center gap-2.5 font-semibold text-base text-text-700 group-hover:text-text-900 transition-colors duration-300">
+                  <RiGithubFill className="w-5 h-5" />
+                  View on GitHub
+                </span>
+              </span>
             </a>
           </motion.div>
 
@@ -500,11 +526,12 @@ export function LandingPage() {
       </section>
 
       {/* ─── Features Bento Grid ─── */}
-      <section id="features" className="py-32 px-6 relative">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] max-w-3xl h-[50%] bg-linear-to-br from-accent-100/10 via-transparent to-violet-100/8 rounded-full blur-[140px]" />
-        </div>
-
+      <section id="features" className="py-32 px-6 relative overflow-hidden">
+        {/* Aurora Mesh for Features */}
+        <div className="aurora-mesh">
+          <div className="blob blob-2" />
+          <div className="blob blob-4" />
+        </div>{" "}
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -561,10 +588,23 @@ export function LandingPage() {
       </section>
 
       {/* ─── CTA Section ─── */}
-      <section className="py-32 px-6 relative">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] max-w-2xl h-[60%] bg-linear-to-br from-accent-100/15 via-blue-100/8 to-violet-100/10 rounded-full blur-[140px]" />
+      <section className="py-32 px-6 relative overflow-hidden">
+        {/* Aurora Mesh for CTA */}
+        <div className="aurora-mesh">
+          <div className="blob blob-1" />
+          <div className="blob blob-3" />
+          <div className="blob blob-5" />
         </div>
+
+        {/* Fine Noise Grid */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.02]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #111 0.8px, transparent 0.8px)",
+            backgroundSize: "20px 20px",
+          }}
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -585,10 +625,24 @@ export function LandingPage() {
           </p>
           <Link
             href="/login"
-            className="group inline-flex items-center gap-2.5 bg-text-900 text-white px-10 py-4 rounded-full font-semibold text-base hover:bg-text-800 active:scale-[0.97] transition-all shadow-lg shadow-text-900/10"
+            className="group relative overflow-hidden inline-flex items-center gap-2.5 bg-text-900 text-white px-10 py-4.5 rounded-full font-semibold text-base active:scale-[0.96] transition-all duration-300 shadow-[0_0_30px_-5px_rgba(102,102,255,0.4)] hover:shadow-[0_0_50px_-5px_rgba(102,102,255,0.6)]"
           >
-            Get Started — It&apos;s Free
-            <RiArrowRightLine className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+            {/* Shimmer sweep */}
+            <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+              <span
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                  animation: "shimmer-slide 3s ease-in-out infinite",
+                }}
+              />
+            </span>
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+            <span className="relative z-10 flex items-center gap-2.5">
+              Get Started — It&apos;s Free
+              <RiArrowRightLine className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
+            </span>
           </Link>
         </motion.div>
       </section>
@@ -612,13 +666,13 @@ export function LandingPage() {
             better meetings
           </p>
           <a
-            href="https://github.com"
+            href="https://github.com/rahmatdeep"
             target="_blank"
             rel="noreferrer"
             className="text-sm text-text-400 hover:text-text-700 transition-colors flex items-center gap-1.5"
           >
             <RiGithubFill className="w-4 h-4" />
-            GitHub
+            @rahmatdeep
           </a>
         </div>
       </footer>

@@ -76,3 +76,213 @@
     @apply bg-text-400;
   }
 }
+
+/* ─── Landing Page Shader Animations ─── */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes aurora-1 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(20%, -15%) scale(1.12);
+  }
+  50% {
+    transform: translate(-8%, 18%) scale(0.92);
+  }
+  75% {
+    transform: translate(-18%, -8%) scale(1.08);
+  }
+}
+
+@keyframes aurora-2 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(-25%, 10%) scale(1.15);
+  }
+  50% {
+    transform: translate(15%, -20%) scale(0.88);
+  }
+  75% {
+    transform: translate(10%, 15%) scale(1.05);
+  }
+}
+
+@keyframes aurora-3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  33% {
+    transform: translate(18%, 18%) scale(1.1);
+  }
+  66% {
+    transform: translate(-15%, -10%) scale(0.95);
+  }
+}
+
+@keyframes float-particle {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-60vh) translateX(20px) scale(0.5);
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(-10px) scale(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Animated border button — uses spinning gradient disc behind a rounded-full inner */
+.btn-animated-border {
+  position: relative;
+  padding: 2px;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.btn-animated-border .spin-gradient {
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 25%,
+    #6666ff 35%,
+    #8a8aff 40%,
+    #b8b8ff 45%,
+    #8a8aff 50%,
+    #6666ff 55%,
+    transparent 65%,
+    transparent 100%
+  );
+  animation: spin 3s linear infinite;
+}
+
+/* Aurora mesh shader background */
+.aurora-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-mesh .blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  mix-blend-mode: normal;
+  will-change: transform;
+}
+
+.aurora-mesh .blob-1 {
+  width: 70%;
+  height: 60%;
+  top: -10%;
+  left: 15%;
+  background: radial-gradient(
+    circle,
+    rgba(102, 102, 255, 0.35),
+    rgba(136, 136, 255, 0.15),
+    transparent 70%
+  );
+  animation: aurora-1 20s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-2 {
+  width: 60%;
+  height: 55%;
+  bottom: -5%;
+  right: 0%;
+  background: radial-gradient(
+    circle,
+    rgba(100, 180, 255, 0.3),
+    rgba(80, 140, 255, 0.12),
+    transparent 70%
+  );
+  animation: aurora-2 25s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-3 {
+  width: 55%;
+  height: 50%;
+  top: 25%;
+  left: -10%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 130, 255, 0.3),
+    rgba(150, 100, 255, 0.12),
+    transparent 70%
+  );
+  animation: aurora-3 18s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-4 {
+  width: 45%;
+  height: 45%;
+  top: 5%;
+  right: -5%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 150, 120, 0.2),
+    rgba(255, 180, 150, 0.08),
+    transparent 70%
+  );
+  animation: aurora-1 22s ease-in-out infinite reverse;
+}
+
+.aurora-mesh .blob-5 {
+  width: 50%;
+  height: 40%;
+  bottom: 10%;
+  left: 25%;
+  background: radial-gradient(
+    circle,
+    rgba(100, 220, 180, 0.18),
+    rgba(80, 200, 160, 0.07),
+    transparent 70%
+  );
+  animation: aurora-2 15s ease-in-out infinite reverse;
+}

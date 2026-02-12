@@ -418,7 +418,7 @@ export function Dashboard({ session }: { session: any }) {
           <div className="pt-16 pb-8 flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0 w-full max-w-lg sm:max-w-none mx-auto">
             <Link
               href="/chat"
-              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-text-200/50 hover:border-text-300 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
+              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/10 backdrop-blur-xl rounded-full shadow-sm hover:shadow-lg hover:shadow-text-900/5 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
                 <RiSparklingLine className="w-5 h-5" />
@@ -442,7 +442,7 @@ export function Dashboard({ session }: { session: any }) {
 
             <Link
               href="/library"
-              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-text-200/50 hover:border-text-300 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
+              className="group relative inline-flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/10 backdrop-blur-xl rounded-full shadow-sm hover:shadow-lg hover:shadow-text-900/5 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
                 <RiHistoryLine className="w-5 h-5" />
