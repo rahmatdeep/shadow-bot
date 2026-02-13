@@ -1,42 +1,59 @@
 @import "tailwindcss";
 
 @theme {
-  /* Primary - Terracotta */
-  --color-primary-50: #fff5f2;
-  --color-primary-100: #ffede8;
-  --color-primary-200: #ffd8cf;
-  --color-primary-300: #ffbba9;
-  --color-primary-400: #ff9176;
-  --color-primary-500: #e07a5f;
-  --color-primary-600: #d4634a;
-  --color-primary-700: #c45a4a;
-  --color-primary-800: #a84a3d;
-  --color-primary-900: #8b3a2f;
+  /* Primary - Deep Black / Charcoal (for CTAs, headings) */
+  --color-primary-50: #f7f7f7;
+  --color-primary-100: #e3e3e3;
+  --color-primary-200: #c8c8c8;
+  --color-primary-300: #a4a4a4;
+  --color-primary-400: #818181;
+  --color-primary-500: #666666;
+  --color-primary-600: #515151;
+  --color-primary-700: #434343;
+  --color-primary-800: #383838;
+  --color-primary-900: #111111;
 
-  /* Text - Brown */
-  --color-text-50: #f7f5f4;
-  --color-text-100: #edebe9;
-  --color-text-200: #dcd7d3;
-  --color-text-300: #c2bbb4;
-  --color-text-400: #a08978;
-  --color-text-500: #8b6f5f;
-  --color-text-600: #7a5548;
-  --color-text-700: #5c3d2e;
-  --color-text-800: #4a3225;
-  --color-text-900: #3d2817;
+  /* Accent - Soft Blue-Violet (for highlights, links, focus rings) */
+  --color-accent-50: #ededff;
+  --color-accent-100: #dcdcff;
+  --color-accent-200: #b8b8ff;
+  --color-accent-300: #8a8aff;
+  --color-accent-400: #6666ff;
+  --color-accent-500: #4444dd;
+  --color-accent-600: #3333cc;
+  --color-accent-700: #2828a3;
+  --color-accent-800: #202080;
+  --color-accent-900: #1a1a66;
 
-  /* Secondary (for bgs) - Creamish Warm White */
-  --color-secondary-50: #fffdfa;
-  --color-secondary-100: #fdfbf7;
-  --color-secondary-200: #f9f5ed;
-  --color-secondary-300: #f2eadb;
-  --color-secondary-400: #e8dbc5;
-  --color-secondary-500: #d9bf9e;
+  /* Text - Neutral */
+  --color-text-50: #fafafa;
+  --color-text-100: #f5f5f5;
+  --color-text-200: #e5e5e5;
+  --color-text-300: #d4d4d4;
+  --color-text-400: #a3a3a3;
+  --color-text-500: #737373;
+  --color-text-600: #525252;
+  --color-text-700: #404040;
+  --color-text-800: #262626;
+  --color-text-900: #111111;
+
+  /* Secondary (for backgrounds, surfaces) */
+  --color-secondary-50: #ffffff;
+  --color-secondary-100: #fafafa;
+  --color-secondary-200: #f5f5f5;
+  --color-secondary-300: #eeeeee;
+  --color-secondary-400: #e0e0e0;
+  --color-secondary-500: #bdbdbd;
+
+  /* Font families */
+  --font-heading: "DM Serif Display", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-secondary-100 text-text-900 selection:bg-primary-500/30;
+    @apply bg-secondary-100 text-text-900 selection:bg-accent-500/20;
+    font-family: var(--font-body);
   }
 
   /* Custom Scrollbar */
@@ -58,4 +75,214 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-text-400;
   }
+}
+
+/* ─── Landing Page Shader Animations ─── */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes aurora-1 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(20%, -15%) scale(1.12);
+  }
+  50% {
+    transform: translate(-8%, 18%) scale(0.92);
+  }
+  75% {
+    transform: translate(-18%, -8%) scale(1.08);
+  }
+}
+
+@keyframes aurora-2 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(-25%, 10%) scale(1.15);
+  }
+  50% {
+    transform: translate(15%, -20%) scale(0.88);
+  }
+  75% {
+    transform: translate(10%, 15%) scale(1.05);
+  }
+}
+
+@keyframes aurora-3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  33% {
+    transform: translate(18%, 18%) scale(1.1);
+  }
+  66% {
+    transform: translate(-15%, -10%) scale(0.95);
+  }
+}
+
+@keyframes float-particle {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-60vh) translateX(20px) scale(0.5);
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(-10px) scale(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Animated border button — uses spinning gradient disc behind a rounded-full inner */
+.btn-animated-border {
+  position: relative;
+  padding: 2px;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.btn-animated-border .spin-gradient {
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 25%,
+    #6666ff 35%,
+    #8a8aff 40%,
+    #b8b8ff 45%,
+    #8a8aff 50%,
+    #6666ff 55%,
+    transparent 65%,
+    transparent 100%
+  );
+  animation: spin 3s linear infinite;
+}
+
+/* Aurora mesh shader background */
+.aurora-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-mesh .blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  mix-blend-mode: normal;
+  will-change: transform;
+}
+
+.aurora-mesh .blob-1 {
+  width: 70%;
+  height: 60%;
+  top: -10%;
+  left: 15%;
+  background: radial-gradient(
+    circle,
+    rgba(102, 102, 255, 0.35),
+    rgba(136, 136, 255, 0.15),
+    transparent 70%
+  );
+  animation: aurora-1 20s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-2 {
+  width: 60%;
+  height: 55%;
+  bottom: -5%;
+  right: 0%;
+  background: radial-gradient(
+    circle,
+    rgba(100, 180, 255, 0.3),
+    rgba(80, 140, 255, 0.12),
+    transparent 70%
+  );
+  animation: aurora-2 25s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-3 {
+  width: 55%;
+  height: 50%;
+  top: 25%;
+  left: -10%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 130, 255, 0.3),
+    rgba(150, 100, 255, 0.12),
+    transparent 70%
+  );
+  animation: aurora-3 18s ease-in-out infinite;
+}
+
+.aurora-mesh .blob-4 {
+  width: 45%;
+  height: 45%;
+  top: 5%;
+  right: -5%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 150, 120, 0.2),
+    rgba(255, 180, 150, 0.08),
+    transparent 70%
+  );
+  animation: aurora-1 22s ease-in-out infinite reverse;
+}
+
+.aurora-mesh .blob-5 {
+  width: 50%;
+  height: 40%;
+  bottom: 10%;
+  left: 25%;
+  background: radial-gradient(
+    circle,
+    rgba(100, 220, 180, 0.18),
+    rgba(80, 200, 160, 0.07),
+    transparent 70%
+  );
+  animation: aurora-2 15s ease-in-out infinite reverse;
 }

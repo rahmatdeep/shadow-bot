@@ -3,17 +3,17 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Video,
-  Sparkles,
-  ArrowRight,
-  Bot,
-  AlertCircle,
-  History,
-  Activity,
-  ArrowUpRight,
-  Text,
-} from "lucide-react";
-import { RiGhostSmileLine } from "react-icons/ri";
+  RiVideoOnLine,
+  RiSparklingLine,
+  RiArrowRightLine,
+  RiRobot2Line,
+  RiErrorWarningLine,
+  RiHistoryLine,
+  RiPulseLine,
+  RiArrowRightUpLine,
+  RiTextBlock,
+} from "react-icons/ri";
+
 import Link from "next/link";
 
 import { meetingApi } from "@/lib/api/meeting";
@@ -50,14 +50,12 @@ export function Dashboard({ session }: { session: any }) {
     let timeoutId: NodeJS.Timeout;
 
     const fetchStatus = () => {
-      // If we have an active recording, just poll its status
       if (activeRecording?.id) {
         meetingApi
           .getStatus(activeRecording.id, token)
           .then((statusData) => {
             if (!isMounted) return;
 
-            // Update the recordings list with the new status
             setRecordings((prev) =>
               prev.map((r) =>
                 r.id === activeRecording.id
@@ -72,7 +70,6 @@ export function Dashboard({ session }: { session: any }) {
               ),
             );
 
-            // Show toast for recording error if it just happened
             if (
               statusData.recordingStatus === "FAILED" &&
               statusData.recordingError &&
@@ -84,7 +81,6 @@ export function Dashboard({ session }: { session: any }) {
               showToast(displayError || "Unknown recording error", "error");
             }
 
-            // Only poll if there are active meetings
             const hasActive = ["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(
               statusData.recordingStatus,
             );
@@ -92,7 +88,6 @@ export function Dashboard({ session }: { session: any }) {
             if (hasActive) {
               timeoutId = setTimeout(fetchStatus, 4000);
             } else {
-              // Once finished, fetch the full list one last time to sync everything (like fileName)
               meetingApi.getMeetings(token).then((data) => {
                 if (isMounted) {
                   setRecordings(data);
@@ -106,7 +101,6 @@ export function Dashboard({ session }: { session: any }) {
             if (isMounted) setIsPolling(false);
           });
       } else {
-        // Fallback or initial fetch of full list
         meetingApi
           .getMeetings(token)
           .then((data) => {
@@ -212,175 +206,234 @@ export function Dashboard({ session }: { session: any }) {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-primary-500/30 relative flex flex-col overflow-hidden">
-      {/* Dynamic Background Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Subtle pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, #3d2817 1px, transparent 0)",
-            backgroundSize: "40px 40px",
-          }}
-        ></div>
+    <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-accent-500/20 relative flex flex-col overflow-hidden">
+      {/* Aurora Mesh Shader Background */}
+      <div className="aurora-mesh">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="blob blob-3" />
+        <div className="blob blob-4" />
+        <div className="blob blob-5" />
+      </div>
 
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary-100/30 rounded-full blur-[120px] mix-blend-multiply animate-pulse duration-10000" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary-200/50 rounded-full blur-[100px] mix-blend-multiply" />
+      {/* Fine Noise Grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #111 0.8px, transparent 0.8px)",
+          backgroundSize: "20px 20px",
+        }}
+      />
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 rounded-full bg-accent-400/30"
+            style={{
+              left: `${15 + i * 14}%`,
+              bottom: `${-5 - i * 3}%`,
+              animation: `float-particle ${12 + i * 3}s ease-in-out infinite`,
+              animationDelay: `${i * 2.5}s`,
+            }}
+          />
+        ))}
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen relative z-10">
-        {/* Brand Header */}
+        {/* Top Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-8 sm:top-12 left-6 sm:left-12 flex items-center gap-2 group cursor-default"
+          className="absolute top-6 sm:top-10 left-0 right-0 px-6 sm:px-12 flex justify-between items-center z-50 pointer-events-none"
         >
-          <div className="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:rotate-6 transition-transform">
-            <RiGhostSmileLine className="w-5 h-5" />
+          {/* Brand */}
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            <span
+              className="text-xl tracking-tight text-text-900"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
+              Shadow
+            </span>
+            <span className="text-xl font-semibold tracking-tight text-text-500">
+              Bot
+            </span>
           </div>
-          <span className="font-black text-xl tracking-tighter text-text-900">
-            Shadow Bot
-          </span>
-        </motion.div>
 
-        {/* User Profile Badge */}
-        <div className="absolute top-8 sm:top-12 right-6 sm:right-12">
-          <UserProfileBadge user={session?.user} />
-        </div>
+          {/* User Profile */}
+          <div className="pointer-events-auto">
+            <UserProfileBadge user={session?.user} />
+          </div>
+        </motion.div>
 
         <div className="w-full max-w-4xl text-center space-y-12">
           {/* Hero Content */}
           <div className="space-y-4 relative">
             <button
               onClick={openModal}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-primary-100 shadow-sm mb-4 hover:bg-primary-50 transition-colors cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-2.5 px-4 py-2 bg-white/70 backdrop-blur-md rounded-full border border-text-200/50 shadow-sm mb-4 hover:bg-white transition-all cursor-pointer active:scale-95 group"
             >
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-bold text-text-500 uppercase tracking-widest">
+              <RiPulseLine className="w-4 h-4 text-accent-600 animate-pulse" />
+              <span className="text-[13px] font-medium text-text-600">
                 Public Beta
               </span>
             </button>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-text-900 tracking-tighter leading-[0.95] relative z-20">
+            <h1
+              className="text-4xl md:text-6xl lg:text-7xl text-text-900 tracking-tight leading-[0.95] relative z-20"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
               Your AI meeting
               <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary-600 via-primary-500 to-orange-500">
-                companion.
-              </span>
+              <span className="text-accent-600">companion.</span>
             </h1>
-            <p className="text-lg md:text-xl text-text-400 font-medium max-w-lg mx-auto leading-relaxed pt-1">
+            <p className="text-lg md:text-xl text-text-500 font-normal max-w-lg mx-auto leading-relaxed pt-1">
               Capture, transcribe, and chat with your meetings in real-time.
             </p>
           </div>
 
           {/* Input Area */}
           <div className="relative max-w-2xl mx-auto group z-20">
-            {/* Dynamic Spotlight Aura */}
+            {/* Subtle Focus Glow */}
             <AnimatePresence>
               {isFocused && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{
-                      opacity: 0.8,
-                      scale: [1, 1.05, 1],
-                    }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{
-                      opacity: { duration: 0.5 },
-                      scale: {
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      },
-                    }}
-                    className="absolute -inset-10 rounded-[3rem] bg-linear-to-r from-primary-500/15 via-orange-500/15 to-violet-500/15 blur-[60px] pointer-events-none"
-                  />
-
-                  {/* Floating Digital Particles */}
-                  {[...Array(8)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{
-                        opacity: [0, 1, 0],
-                        scale: [0, 1, 0],
-                        x: [
-                          0,
-                          (i % 2 === 0 ? 1 : -1) * (40 + Math.random() * 100),
-                        ],
-                        y: [0, (i < 4 ? 1 : -1) * (30 + Math.random() * 80)],
-                      }}
-                      transition={{
-                        duration: 3 + Math.random() * 2,
-                        repeat: Infinity,
-                        delay: i * 0.4,
-                      }}
-                      className="absolute left-1/2 top-1/2 w-1 h-1 bg-primary-400 rounded-full blur-[1px] pointer-events-none"
-                    />
-                  ))}
-                </>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{
+                    opacity: 0.5,
+                    scale: [1, 1.05, 1],
+                  }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{
+                    opacity: { duration: 0.4 },
+                    scale: {
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    },
+                  }}
+                  className="absolute -inset-10 rounded-[3rem] bg-linear-to-r from-accent-400/20 via-blue-400/10 to-violet-400/20 blur-[60px] pointer-events-none"
+                />
               )}
             </AnimatePresence>
 
             {/* Main Input Container */}
             <motion.div
               animate={{
-                scale: isFocused ? 1.02 : 1,
+                scale: isFocused ? 1.01 : 1,
                 boxShadow: isFocused
-                  ? "0 30px 60px -12px rgba(61,40,23,0.15), 0 0 40px 0 rgba(193,81,19,0.1)"
-                  : "0 20px 40px -12px rgba(61,40,23,0.1)",
+                  ? "0 25px 70px -12px rgba(102,102,255,0.12), 0 0 0 1px rgba(102,102,255,0.2)"
+                  : "0 8px 30px -12px rgba(0,0,0,0.06)",
               }}
-              className={`relative bg-white/80 backdrop-blur-xl rounded-2xl flex items-center p-2.5 border transition-all duration-500 ${
+              className={`relative bg-white/95 backdrop-blur-xl rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center p-2 sm:p-2.5 border transition-all duration-500 ${
                 isFocused
-                  ? "border-primary-400/50 ring-4 ring-primary-500/10"
-                  : "border-text-900/5"
+                  ? "border-accent-400/50 ring-8 ring-accent-500/5"
+                  : "border-text-200/60"
               }`}
             >
-              <div
-                className={`pl-5 pr-3 transition-colors duration-500 ${isFocused ? "text-primary-600" : "text-text-300"}`}
-              >
-                <Video className="w-6 h-6" />
+              <div className="flex items-center flex-1">
+                <div
+                  className={`pl-5 pr-3 transition-colors duration-500 ${isFocused ? "text-text-700" : "text-text-300"}`}
+                >
+                  <RiVideoOnLine className="w-5 h-5" />
+                </div>
+
+                <input
+                  ref={inputRef}
+                  value={meetLink}
+                  onChange={(e) => handleMeetLinkChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleInvite();
+                    }
+                  }}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  disabled={isDeploying}
+                  className="flex-1 h-14 bg-transparent outline-none text-lg font-medium text-text-900 placeholder:text-text-300 tracking-tight min-w-0"
+                  placeholder="meet.google.com/xxx-yyyy"
+                />
               </div>
 
-              <input
-                ref={inputRef}
-                value={meetLink}
-                onChange={(e) => handleMeetLinkChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleInvite();
-                  }
-                }}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                disabled={isDeploying}
-                className="flex-1 h-14 bg-transparent outline-none text-lg md:text-xl font-bold text-text-900 placeholder:text-text-200 placeholder:font-bold tracking-tight"
-                placeholder="meet.google.com/xxx-yyyy-zzz"
-              />
-
               <AnimatePresence>
+                {(meetLink.length > 5 || isDeploying) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                    animate={{ height: "auto", opacity: 1, marginTop: 8 }}
+                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                    className="sm:hidden overflow-hidden"
+                  >
+                    <button
+                      onClick={handleInvite}
+                      disabled={isDeploying || !!activeBotContainerId}
+                      className="w-full h-14 rounded-xl relative overflow-hidden bg-text-900 text-white font-semibold shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
+                    >
+                      {/* Shimmer sweep overlay */}
+                      <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+                        <span
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                            animation: "shimmer-slide 3s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                      {/* Accent underline glow */}
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+
+                      <span className="relative z-10 flex items-center gap-2.5">
+                        {isDeploying ? (
+                          <RiSparklingLine className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RiArrowRightLine className="w-5 h-5" />
+                        )}
+                        <span className="text-lg tracking-tight">
+                          {isDeploying ? "Launching..." : "Join Now"}
+                        </span>
+                      </span>
+                    </button>
+                  </motion.div>
+                )}
+
                 {(meetLink.length > 5 || isDeploying) && (
                   <motion.div
                     initial={{ width: 0, opacity: 0, marginLeft: 0 }}
                     animate={{ width: "auto", opacity: 1, marginLeft: 8 }}
                     exit={{ width: 0, opacity: 0, marginLeft: 0 }}
                     transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                    className="overflow-hidden"
+                    className="hidden sm:block overflow-hidden"
                   >
                     <button
                       onClick={handleInvite}
                       disabled={isDeploying || !!activeBotContainerId}
-                      className="h-12 pl-6 pr-8 rounded-xl bg-primary-600 text-white font-bold shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 whitespace-nowrap"
+                      className="h-12 pl-6 pr-8 rounded-xl relative overflow-hidden bg-text-900 text-white font-semibold shadow-md hover:bg-text-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 whitespace-nowrap group/btn"
                     >
-                      {isDeploying ? (
-                        <Sparkles className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-5 h-5" />
-                      )}
-                      <span className="text-base tracking-tight">
-                        {isDeploying ? "Launching..." : "Join Now"}
+                      {/* Shimmer sweep overlay */}
+                      <span className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+                        <span
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                            animation: "shimmer-slide 3s ease-in-out infinite",
+                          }}
+                        />
+                      </span>
+                      {/* Accent underline glow */}
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+
+                      <span className="relative z-10 flex items-center gap-2.5">
+                        {isDeploying ? (
+                          <RiSparklingLine className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RiArrowRightLine className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                        )}
+                        <span className="text-base tracking-tight">
+                          {isDeploying ? "Launching..." : "Join Now"}
+                        </span>
                       </span>
                     </button>
                   </motion.div>
@@ -395,26 +448,25 @@ export function Dashboard({ session }: { session: any }) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="text-sm font-bold text-red-700/70 flex items-center gap-2 bg-white/40 backdrop-blur-md px-6 py-2.5 rounded-full border border-red-500/10 shadow-sm"
+                    className="text-sm font-medium text-red-500 flex items-center gap-2 bg-red-50/80 backdrop-blur-md px-6 py-2.5 rounded-full border border-red-200/50 shadow-sm"
                   >
-                    <AlertCircle className="w-4 h-4 text-red-500/60" />{" "}
+                    <RiErrorWarningLine className="w-4 h-4 text-red-400" />{" "}
                     {linkError}
                   </motion.p>
                 ) : (
-                  // Helper text when no error
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-6 text-text-300 text-xs font-bold uppercase tracking-widest bg-white/50 px-6 py-2 rounded-full border border-white/50"
+                    className="flex items-center gap-6 text-text-400 text-xs font-medium uppercase tracking-widest bg-white/60 backdrop-blur-md px-6 py-2 rounded-full border border-text-200/50"
                   >
                     <span className="flex items-center gap-2">
-                      <Text className="w-3 h-3" /> Fast Transcription
+                      <RiTextBlock className="w-3 h-3" /> Transcription
                     </span>
                     <span className="flex items-center gap-2">
-                      <Bot className="w-3 h-3" /> AI Summary
+                      <RiRobot2Line className="w-3 h-3" /> Summary
                     </span>
                     <span className="flex items-center gap-2">
-                      <Sparkles className="w-3 h-3" /> AI Chat
+                      <RiSparklingLine className="w-3 h-3" /> AI Chat
                     </span>
                   </motion.div>
                 )}
@@ -423,58 +475,95 @@ export function Dashboard({ session }: { session: any }) {
           </div>
 
           {/* Footer / Links */}
-          <div className="pt-16 pb-8 flex gap-4 justify-center">
-            <Link
-              href="/chat"
-              className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"
+          <div className="pt-16 pb-8 flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0 w-full max-w-lg sm:max-w-none mx-auto">
+            <motion.div
+              whileHover="hover"
+              whileTap="active"
+              initial="initial"
+              className="btn-animated-border group w-full sm:w-auto p-px rounded-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 border border-white/20 hover:border-transparent"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center text-text-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
-                <Sparkles className="w-5 h-5" />
-              </div>
+              <Link
+                href="/chat"
+                className="relative block rounded-full overflow-hidden p-px"
+              >
+                <motion.div
+                  variants={{
+                    initial: { opacity: 0 },
+                    hover: { opacity: 1 },
+                    active: { opacity: 1, scale: 1.05 },
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="spin-gradient"
+                />
+                <div className="relative z-10 flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/90 backdrop-blur-xl rounded-full">
+                  <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
+                    <RiSparklingLine className="w-5 h-5" />
+                  </div>
 
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-text-400 uppercase tracking-wider group-hover:text-primary-600/70 transition-colors">
-                  AI Chat
-                </span>
-                <span className="font-bold text-text-700 group-hover:text-text-900 text-sm transition-colors">
-                  Ask Across Meetings
-                </span>
-              </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
+                      AI Chat
+                    </span>
+                    <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
+                      Ask Across Meetings
+                    </span>
+                  </div>
 
-              <div className="pl-2">
-                <div className="w-8 h-8 rounded-full border border-text-100 flex items-center justify-center group-hover:border-primary-200 group-hover:bg-primary-50 transition-all">
-                  <ArrowRight className="w-4 h-4 text-text-300 group-hover:text-primary-600 group-hover:-rotate-45 transition-all duration-300" />
+                  <div className="pl-2">
+                    <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
+                      <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
 
-            <Link
-              href="/library"
-              className="group relative inline-flex items-center gap-4 px-8 py-4 bg-white rounded-full shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_-10px_rgba(200,90,30,0.1)] border border-transparent hover:border-primary-100 transition-all duration-300 hover:-translate-y-0.5"
+            <motion.div
+              whileHover="hover"
+              whileTap="active"
+              initial="initial"
+              className="btn-animated-border group w-full sm:w-auto p-px rounded-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 border border-white/20 hover:border-transparent"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary-50 flex items-center justify-center text-text-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors duration-300">
-                <History className="w-5 h-5" />
-              </div>
+              <Link
+                href="/library"
+                className="relative block rounded-full overflow-hidden p-px"
+              >
+                <motion.div
+                  variants={{
+                    initial: { opacity: 0 },
+                    hover: { opacity: 1 },
+                    active: { opacity: 1, scale: 1.05 },
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="spin-gradient"
+                />
+                <div className="relative z-10 flex items-center gap-4 px-6 sm:px-8 py-4 bg-white/90 backdrop-blur-xl rounded-full">
+                  <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center text-text-500 group-hover:bg-accent-50 group-hover:text-accent-600 transition-colors duration-300">
+                    <RiHistoryLine className="w-5 h-5" />
+                  </div>
 
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-text-400 uppercase tracking-wider group-hover:text-primary-600/70 transition-colors">
-                  Library
-                </span>
-                <span className="font-bold text-text-700 group-hover:text-text-900 text-sm transition-colors">
-                  View Past Meetings
-                </span>
-              </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-medium text-text-400 uppercase tracking-wider group-hover:text-accent-600 transition-colors">
+                      Library
+                    </span>
+                    <span className="font-semibold text-text-800 group-hover:text-text-900 text-sm transition-colors">
+                      View Past Meetings
+                    </span>
+                  </div>
 
-              <div className="pl-2">
-                <div className="w-8 h-8 rounded-full border border-text-100 flex items-center justify-center group-hover:border-primary-200 group-hover:bg-primary-50 transition-all">
-                  <ArrowRight className="w-4 h-4 text-text-300 group-hover:text-primary-600 group-hover:-rotate-45 transition-all duration-300" />
+                  <div className="pl-2">
+                    <div className="w-8 h-8 rounded-full border border-text-200 flex items-center justify-center group-hover:border-accent-300 group-hover:bg-accent-50 transition-all">
+                      <RiArrowRightLine className="w-4 h-4 text-text-400 group-hover:text-accent-600 group-hover:-rotate-45 transition-all duration-300" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </div>
 
+      {/* Active Recording Banner */}
       <AnimatePresence>
         {activeRecording && (
           <motion.div
@@ -486,7 +575,7 @@ export function Dashboard({ session }: { session: any }) {
           >
             <div
               onClick={() => (window.location.href = "/library")}
-              className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-primary-200/40 shadow-2xl shadow-text-900/10 rounded-full px-6 py-3.5 flex items-center gap-6 cursor-pointer group hover:scale-[1.02] hover:bg-white transition-all duration-300 ring-1 ring-black/5"
+              className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-text-200/60 shadow-xl shadow-text-900/5 rounded-full px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center gap-3 sm:gap-6 cursor-pointer group hover:scale-[1.02] hover:bg-white transition-all duration-300 ring-1 ring-black/5 max-w-[95vw] sm:max-w-none"
             >
               {(() => {
                 const statusConfig = getMeetingStatus(
@@ -500,24 +589,24 @@ export function Dashboard({ session }: { session: any }) {
                         className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusConfig.dotClass}`}
                       ></span>
                       <span
-                        className={`text-[10px] font-black uppercase tracking-widest ${statusConfig.textClass}`}
+                        className={`text-[10px] font-bold uppercase tracking-widest ${statusConfig.textClass}`}
                       >
                         {statusConfig.label}
                       </span>
                     </div>
 
-                    <div className="h-4 w-px bg-text-200" />
+                    <div className="h-4 w-px bg-text-200 shrink-0" />
 
-                    <div className="flex items-center gap-2 text-text-600">
-                      <span className="font-bold text-sm tracking-tight">
+                    <div className="flex items-center gap-2 text-text-600 min-w-0">
+                      <span className="font-semibold text-xs sm:text-sm tracking-tight truncate max-w-[120px] sm:max-w-xs">
                         {activeRecording.link ||
                           `Meeting #${activeRecording.id.substring(0, 8)}`}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 pl-2 text-primary-600 font-black text-[10px] uppercase tracking-wider group-hover:underline decoration-2 underline-offset-4 decoration-primary-200">
+                    <div className="flex items-center gap-1.5 pl-2 text-accent-600 font-bold text-[10px] uppercase tracking-wider group-hover:underline decoration-2 underline-offset-4 decoration-accent-200 shrink-0">
                       <span>Open</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      <RiArrowRightUpLine className="w-3.5 h-3.5" />
                     </div>
                   </>
                 );
@@ -539,16 +628,16 @@ export function Dashboard({ session }: { session: any }) {
             <div
               className={`flex items-center gap-3 px-8 py-4 rounded-2xl shadow-xl border backdrop-blur-md ${
                 toast.type === "error"
-                  ? "bg-red-50/95 text-red-900 border-red-200 shadow-red-500/10"
-                  : "bg-emerald-50/95 text-emerald-900 border-emerald-200 shadow-emerald-500/10"
+                  ? "bg-red-50/95 text-red-800 border-red-200/60 shadow-red-500/5"
+                  : "bg-emerald-50/95 text-emerald-800 border-emerald-200/60 shadow-emerald-500/5"
               }`}
             >
               <div
                 className={`w-2 h-2 rounded-full ${
-                  toast.type === "error" ? "bg-red-500" : "bg-emerald-500"
+                  toast.type === "error" ? "bg-red-400" : "bg-emerald-400"
                 }`}
               />
-              <p className="text-sm font-bold tracking-tight">
+              <p className="text-sm font-semibold tracking-tight">
                 {toast.message}
               </p>
             </div>

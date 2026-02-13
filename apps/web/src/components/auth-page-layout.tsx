@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
-import { RiGhostSmileLine } from "react-icons/ri";
+
 import Link from "next/link";
 
 interface AuthPageLayoutProps {
@@ -24,176 +24,130 @@ export function AuthPageLayout({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let width = window.innerWidth;
-    let height = window.innerHeight;
     let animationFrameId: number;
-    let centerX = width / 2;
-    let centerY = height / 2;
-
-    // INTERACTION STATE
-    // The ring is ALWAYS at center.
-    // Mouse controls parameters only.
-    const params = {
-      thickness: 50, // Controlled by distance from center
-      speed: 0.002, // Controlled by X (yaw) or distance
-      tiltX: 0, // Controlled by Y
-      tiltY: 0, // Controlled by X
-      colorShift: 0, // 0 = Terracotta light, 1 = Terracotta dark
-    };
-
-    // Smooth Lerp Targets
-    const targetParams = {
-      thickness: 50,
-      speed: 0.002,
-      tiltX: 0,
-      tiltY: 0,
-      colorShift: 0,
-    };
-
-    const PARTICLE_COUNT = 4000;
-
-    interface Particle {
-      angle: number; // Orbit angle (0-2PI)
-      radius: number; // Base radius offset (0-1)
-      zOffset: number; // Vertical scatter
-      speedOffset: number; // Individual speed variance
+    const particles: {
+      x: number;
+      y: number;
       size: number;
-    }
-
-    const particles: Particle[] = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push({
-        angle: Math.random() * Math.PI * 2,
-        radius: Math.random(), // 0 to 1, used to distribute within thickness
-        zOffset: (Math.random() - 0.5) * 2, // -1 to 1
-        speedOffset: 0.5 + Math.random(), // Multiplier
-        size: Math.random(),
-      });
-    }
+      speedX: number;
+      speedY: number;
+      opacity: number;
+      color: number;
+    }[] = [];
+    const particleCount = 60;
+    let mouseX = 0;
+    let mouseY = 0;
 
     const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      centerX = width / 2;
-      centerY = height / 2;
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      // Calculate normalized distance from center (0 to 1 approx)
-      const dx = e.clientX - centerX;
-      const dy = e.clientY - centerY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxDist = Math.min(width, height) / 2;
-      const normDist = Math.min(dist / maxDist, 1);
+    resize();
 
-      // MAP MOUSE TO PARAMS
+    // Blue / violet / lavender tones for particles
+    const colors = [
+      [100, 100, 240], // soft blue-violet
+      [140, 130, 255], // lavender
+      [80, 80, 200], // deeper blue
+      [160, 140, 220], // muted lilac
+      [120, 120, 180], // grey-blue
+    ];
 
-      // 1. Thickness: Closer = Thin/Focused. Further = Huge/Exploded.
-      targetParams.thickness = 20 + normDist * 300;
-
-      // 2. Speed: Further = Faster (Engine revving up)
-      targetParams.speed = 0.002 + normDist * 0.02;
-
-      // 3. Tilt: Based on mouse quadrant
-      targetParams.tiltX = (dy / height) * 2; // -1 to 1
-      targetParams.tiltY = (dx / width) * 2; // -1 to 1
-
-      // 4. Color: Intensity
-      targetParams.colorShift = normDist;
-    };
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2.5 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.4,
+        speedY: (Math.random() - 0.5) * 0.4,
+        opacity: Math.random() * 0.3 + 0.05,
+        color: Math.floor(Math.random() * colors.length),
+      });
+    }
 
     const draw = () => {
-      // Smooth Parameter Interpolation (Lerp)
-      const ease = 0.05;
-      params.thickness += (targetParams.thickness - params.thickness) * ease;
-      params.speed += (targetParams.speed - params.speed) * ease;
-      params.tiltX += (targetParams.tiltX - params.tiltX) * ease;
-      params.tiltY += (targetParams.tiltY - params.tiltY) * ease;
-      params.colorShift += (targetParams.colorShift - params.colorShift) * ease;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.clearRect(0, 0, width, height);
-
-      const baseRadius = Math.min(width, height) * 0.35; // HUGE: 35% of screen min dim
-
-      // Color Interpolation - Updated to Terracotta (Primary)
-      // Primary-500: #e07a5f -> 224, 122, 95
-      // Primary-900: #8b3a2f -> 139, 58, 47
-      const colorShift = Math.min(params.colorShift, 0.1);
-      const r = 224 + (139 - 224) * colorShift;
-      const g = 122 + (58 - 122) * colorShift;
-      const b = 95 + (47 - 95) * colorShift;
-      const rgb = `${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}`;
-
-      ctx.fillStyle = `rgba(${rgb}, 1)`;
-
-      // Precalc rotation matrices
-      const cosX = Math.cos(params.tiltX * 0.5); // Dampened tilt
-      const sinX = Math.sin(params.tiltX * 0.5);
-      const cosY = Math.cos(params.tiltY * 0.5);
-      const sinY = Math.sin(params.tiltY * 0.5);
+      // Subtle radial gradient background wash
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width * 0.6,
+      );
+      gradient.addColorStop(0, "rgba(120, 120, 240, 0.04)");
+      gradient.addColorStop(0.5, "rgba(160, 140, 220, 0.02)");
+      gradient.addColorStop(1, "rgba(250, 250, 250, 0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       particles.forEach((p) => {
-        // Orbit
-        p.angle += params.speed * p.speedOffset;
+        // Subtle mouse attraction
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 250) {
+          p.x += dx * 0.001;
+          p.y += dy * 0.001;
+        }
 
-        // Form the Ring
-        const spread =
-          Math.pow(p.radius, 2) *
-          params.thickness *
-          (Math.random() > 0.5 ? 1 : -1);
-        const r = baseRadius + spread;
+        p.x += p.speedX;
+        p.y += p.speedY;
 
-        // Model Coordinates (Flat Ring)
-        const x = r * Math.cos(p.angle);
-        const y = r * Math.sin(p.angle);
-        const z = p.zOffset * (params.thickness * 0.2); // Z-thickness scales with width too
+        // Wrap
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
 
-        // Apply 3D Rotation (Tilt)
-        // Rotate Y (Yaw)
-        const x1 = x * cosY - z * sinY;
-        const z1 = x * sinY + z * cosY;
-        // Rotate X (Pitch)
-        const y2 = y * cosX - z1 * sinX;
-        const z2 = y * sinX + z1 * cosX;
-
-        // Perspective
-        const cameraZ = 800;
-        const scale = cameraZ / (cameraZ + z2);
-
-        const screenX = centerX + x1 * scale;
-        const screenY = centerY + y2 * scale;
-
-        // Draw
-        const alpha = Math.max(0.1, scale * 0.8 * (1 - p.radius)); // Fade edges
-        ctx.globalAlpha = alpha;
-
+        const rgb = colors[p.color];
+        ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${p.opacity})`;
         ctx.beginPath();
-        const pSize = Math.max(0.5, p.size * 2 * scale);
-        ctx.arc(screenX, screenY, pSize, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       });
+
+      // Draw subtle connecting lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) {
+            ctx.strokeStyle = `rgba(140, 130, 220, ${0.03 * (1 - dist / 150)})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
 
       animationFrameId = requestAnimationFrame(draw);
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
     window.addEventListener("resize", resize);
     window.addEventListener("mousemove", handleMouseMove);
-    resize();
     draw();
 
     return () => {
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-secondary-50 text-text-900 font-sans selection:bg-primary-500/30 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Canvas Background */}
+    <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-accent-500/20 flex items-center justify-center p-6 relative overflow-hidden">
       <canvas
         ref={canvasRef}
         className="absolute inset-0 pointer-events-none z-0"
@@ -201,10 +155,12 @@ export function AuthPageLayout({
       />
 
       {/* Static Gradient Fallback */}
-      <div className="absolute inset-0 z-[-1] bg-radial-gradient from-primary-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[60%] h-[40%] bg-linear-to-br from-accent-200/15 via-blue-200/10 to-violet-200/10 rounded-full blur-[120px]" />
+      </div>
 
-      {/* Content */}
       <motion.div
+        layout
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{
@@ -212,48 +168,47 @@ export function AuthPageLayout({
           ease: [0.22, 1, 0.36, 1],
           delay: 0.2,
         }}
-        className="w-full max-w-sm z-10 space-y-12 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-text-900/10 shadow-2xl relative"
+        className="w-full max-w-sm z-10 space-y-12 bg-white/80 backdrop-blur-xl p-8 rounded-3xl border border-text-200/50 shadow-2xl shadow-text-900/4 relative"
       >
-        {/* Floating animation */}
-        <motion.div
-          animate={{
-            y: [0, -8, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute inset-0 -z-10 bg-linear-to-br from-primary-600/5 to-primary-800/5 rounded-3xl blur-xl"
-        />
-
-        <header className="text-center space-y-4 pt-4">
-          <Link href="/" className="inline-block group">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="w-14 h-14 rounded-2xl bg-linear-to-br from-primary-600 to-primary-800 mx-auto flex items-center justify-center shadow-2xl shadow-primary-800/20 group-hover:shadow-primary-800/40 transition-shadow duration-300"
-            >
-              <RiGhostSmileLine className="text-white w-7 h-7" />
-            </motion.div>
-          </Link>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="space-y-1"
+        {/* Brand */}
+        <div className="text-center space-y-6">
+          {/* <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 group mx-auto"
           >
-            <h1 className="text-3xl font-bold tracking-tight text-text-900">
-              {title}
-            </h1>
-            <p className="text-sm font-medium text-text-600 tracking-tight">
-              {subtitle}
-            </p>
-          </motion.div>
-        </header>
+            <span
+              className="text-2xl text-text-900 tracking-tight group-hover:opacity-70 transition-opacity"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
+              Shadow
+            </span>
+            <span className="text-2xl font-semibold tracking-tight text-text-400 group-hover:opacity-70 transition-opacity">
+              Bot
+            </span>
+          </Link> */}
+          <div className="space-y-2 min-h-22 flex flex-col justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-2"
+              >
+                <h1
+                  className="text-3xl text-text-900 tracking-tight"
+                  style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+                >
+                  {title}
+                </h1>
+                <p className="text-sm text-text-500 font-normal">{subtitle}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
 
-        <main className="relative pb-4">{children}</main>
+        {children}
       </motion.div>
     </div>
   );

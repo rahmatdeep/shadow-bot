@@ -1,11 +1,11 @@
 import {
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Video,
-  AlertTriangle,
-} from "lucide-react";
+  RiLoader4Line,
+  RiCheckboxCircleLine,
+  RiErrorWarningLine,
+  RiTimeLine,
+  RiVideoOnLine,
+  RiAlertLine,
+} from "react-icons/ri";
 
 export type RecordingStatus =
   | "PENDING"
@@ -37,7 +37,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-amber-700/80",
         borderClass: "border-amber-500/10",
         dotClass: "bg-amber-400",
-        icon: Loader2,
+        icon: RiLoader4Line,
         animationClass: "animate-spin",
       };
     case "ASKING_TO_JOIN":
@@ -47,7 +47,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-yellow-700/80",
         borderClass: "border-yellow-500/10",
         dotClass: "bg-yellow-500",
-        icon: Clock,
+        icon: RiTimeLine,
         animationClass: "animate-pulse",
       };
     case "JOINED":
@@ -57,7 +57,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-indigo-700/80",
         borderClass: "border-indigo-500/10",
         dotClass: "bg-indigo-500",
-        icon: Video,
+        icon: RiVideoOnLine,
       };
     case "COMPLETED":
       return {
@@ -66,7 +66,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-emerald-700/80",
         borderClass: "border-emerald-500/10",
         dotClass: "bg-emerald-500",
-        icon: CheckCircle2,
+        icon: RiCheckboxCircleLine,
       };
     case "FAILED":
       return {
@@ -75,7 +75,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-red-700/80",
         borderClass: "border-red-500/10",
         dotClass: "bg-red-500",
-        icon: AlertCircle,
+        icon: RiErrorWarningLine,
       };
     case "TIMEOUT":
       return {
@@ -84,7 +84,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-orange-700/80",
         borderClass: "border-orange-500/10",
         dotClass: "bg-orange-500",
-        icon: AlertTriangle,
+        icon: RiAlertLine,
       };
     default:
       return {
@@ -93,7 +93,7 @@ export function getMeetingStatus(status: string): StatusConfig {
         textClass: "text-text-500",
         borderClass: "border-text-100",
         dotClass: "bg-text-400",
-        icon: Loader2,
+        icon: RiLoader4Line,
       };
   }
 }
@@ -109,7 +109,7 @@ export function getFeatureStatus(status: string): StatusConfig {
         textClass: "text-amber-700/80",
         borderClass: "border-amber-500/10",
         dotClass: "bg-amber-500",
-        icon: Loader2,
+        icon: RiLoader4Line,
         animationClass: "animate-spin",
       };
     case "COMPLETED":
@@ -119,7 +119,7 @@ export function getFeatureStatus(status: string): StatusConfig {
         textClass: "text-emerald-700/80",
         borderClass: "border-emerald-500/10",
         dotClass: "bg-emerald-500",
-        icon: CheckCircle2,
+        icon: RiCheckboxCircleLine,
       };
     case "FAILED":
       return {
@@ -128,7 +128,7 @@ export function getFeatureStatus(status: string): StatusConfig {
         textClass: "text-red-700/80",
         borderClass: "border-red-500/10",
         dotClass: "bg-red-500",
-        icon: AlertCircle,
+        icon: RiErrorWarningLine,
       };
     default:
       return {
@@ -137,7 +137,7 @@ export function getFeatureStatus(status: string): StatusConfig {
         textClass: "text-text-500",
         borderClass: "border-text-100",
         dotClass: "bg-text-400",
-        icon: Loader2,
+        icon: RiLoader4Line,
       };
   }
 }

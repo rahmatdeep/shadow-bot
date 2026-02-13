@@ -1,7 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Database, HardDrive, ShieldAlert, X, Zap } from "lucide-react";
+import {
+  RiTimeLine,
+  RiDatabase2Line,
+  RiHardDriveLine,
+  RiShieldCheckLine,
+  RiCloseLine,
+  RiFlashlightLine,
+} from "react-icons/ri";
 
 interface TrialLimitsModalProps {
   isOpen: boolean;
@@ -12,124 +19,145 @@ export function TrialLimitsModal({ isOpen, onClose }: TrialLimitsModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-text-900/20 backdrop-blur-md"
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal Container to handle scroll on small heights */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden ring-1 ring-black/5 z-10"
+            className="relative w-full max-w-md max-h-[90vh] bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-text-900/10 flex flex-col overflow-hidden ring-1 ring-text-200/50 z-10"
           >
-            {/* Decorative Header Background */}
-            <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-primary-50 to-transparent pointer-events-none" />
+            {/* Decorative Header Gradient */}
+            <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-accent-50/50 to-transparent pointer-events-none" />
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 text-text-400 hover:text-text-900 hover:bg-black/5 rounded-full transition-colors z-20"
+              className="absolute top-4 right-4 p-2 text-text-400 hover:text-text-700 hover:bg-secondary-200/50 rounded-full transition-all z-20 active:scale-95"
             >
-              <X className="w-5 h-5" />
+              <RiCloseLine className="w-5 h-5" />
             </button>
 
-            <div className="relative p-6 sm:p-8 pt-10">
+            {/* Scrollable Content */}
+            <div className="relative flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 pt-10">
               {/* Header */}
               <div className="text-center mb-8">
-                <div className="w-14 h-14 mx-auto bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary-500/20 ring-4 ring-white">
-                  <ShieldAlert className="w-7 h-7" />
+                <div className="w-16 h-16 mx-auto bg-white text-accent-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-accent-100 ring-4 ring-accent-50/30 transition-transform hover:scale-105 duration-500">
+                  <RiShieldCheckLine className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-black text-text-900 tracking-tight mb-2">
+                <h2
+                  className="text-2xl sm:text-3xl text-text-900 tracking-tight mb-2"
+                  style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+                >
                   Public Beta Active
                 </h2>
-                <p className="text-text-500 text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
-                  You are currently using the Public Beta. Please note the
-                  following limitations:
+                <p className="text-text-500 text-sm font-normal leading-relaxed max-w-[280px] mx-auto">
+                  Experience the future of AI meetings. Please note the current
+                  beta guidelines:
                 </p>
               </div>
 
               {/* Limitations List */}
-              <div className="space-y-3 mb-8">
-                {/* 15 Mins */}
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 border border-secondary-100/60 hover:border-primary-100 transition-colors group">
-                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-white border border-secondary-100 text-orange-500 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform">
-                    <Clock className="w-4 h-4" />
+              <div className="space-y-3 mb-4">
+                {[
+                  {
+                    icon: RiTimeLine,
+                    title: "15-Minute Limit",
+                    desc: "Auto-disconnects after 15 minutes of recording.",
+                    color: "text-orange-500",
+                    bg: "bg-orange-50/50",
+                  },
+                  {
+                    icon: RiFlashlightLine,
+                    title: "Single Concurrent Bot",
+                    desc: "One active bot per account at any given time.",
+                    color: "text-blue-500",
+                    bg: "bg-blue-50/50",
+                  },
+                  {
+                    icon: RiHardDriveLine,
+                    title: "24-Hour Retention",
+                    desc: "Transcripts & recordings auto-delete after 24 hours.",
+                    color: "text-rose-500",
+                    bg: "bg-rose-50/50",
+                  },
+                  {
+                    icon: RiDatabase2Line,
+                    title: "Simulation Limits",
+                    desc: "Limited number of total recordings per beta cycle.",
+                    color: "text-violet-500",
+                    bg: "bg-violet-50/50",
+                  },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-4 p-4 rounded-2xl bg-white/40 border border-text-100/50 hover:border-accent-200/40 hover:bg-white/60 transition-all group"
+                  >
+                    <div
+                      className={`mt-0.5 w-9 h-9 rounded-xl ${item.bg} border border-text-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}
+                    >
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-text-900 text-sm tracking-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-text-400 font-medium mt-0.5 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-text-900 text-sm tracking-tight">
-                      15-Minute Recording Limit
-                    </h3>
-                    <p className="text-xs text-text-500 font-medium mt-0.5 leading-relaxed">
-                      Bot automatically leaves after 15 minutes of recording.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 1 Concurrent */}
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 border border-secondary-100/60 hover:border-primary-100 transition-colors group">
-                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-white border border-secondary-100 text-blue-500 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-text-900 text-sm tracking-tight">
-                      Single Concurrent Bot
-                    </h3>
-                    <p className="text-xs text-text-500 font-medium mt-0.5 leading-relaxed">
-                      You can only have one active bot in a meeting at a time.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 24h Retention */}
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 border border-secondary-100/60 hover:border-primary-100 transition-colors group">
-                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-white border border-secondary-100 text-rose-500 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform">
-                    <HardDrive className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-text-900 text-sm tracking-tight">
-                      24-Hour Retention
-                    </h3>
-                    <p className="text-xs text-text-500 font-medium mt-0.5 leading-relaxed">
-                      Recordings and transcripts are auto-deleted after 24
-                      hours.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Total Limit */}
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 border border-secondary-100/60 hover:border-primary-100 transition-colors group">
-                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-white border border-secondary-100 text-violet-500 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform">
-                    <Database className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-text-900 text-sm tracking-tight">
-                      Simultaneous Sessions Limited
-                    </h3>
-                    <p className="text-xs text-text-500 font-medium mt-0.5 leading-relaxed">
-                      A limited number of total meetings can be recorded.
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
+            </div>
 
-              {/* Action Button */}
+            {/* Fixed Footer Action */}
+            <div className="p-6 pt-2 border-t border-text-100/30 bg-white/50 backdrop-blur-md">
               <button
                 onClick={onClose}
-                className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="group relative w-full py-4 bg-text-900 text-white font-semibold rounded-full shadow-xl shadow-text-900/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 overflow-hidden"
               >
-                <span>I Understand</span>
+                {/* Shimmer sweep overlay */}
+                <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                  <span
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                      animation: "shimmer-slide 3s ease-in-out infinite",
+                    }}
+                  />
+                </span>
+                {/* Accent underline glow */}
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+                <span className="relative z-10">I Understand</span>
               </button>
             </div>
           </motion.div>
         </div>
       )}
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+      `}</style>
     </AnimatePresence>
   );
 }

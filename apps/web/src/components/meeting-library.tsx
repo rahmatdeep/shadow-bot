@@ -2,20 +2,21 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search,
-  Bot,
-  Video,
-  History,
-  MessageSquare,
-  FileText,
-  Sparkles,
-  Play,
-  Loader2,
-  AlertCircle,
-  AlertTriangle,
-  Clock,
-} from "lucide-react";
-import { RiGhostSmileLine } from "react-icons/ri";
+  RiSearchLine,
+  RiVideoOnLine,
+  RiTimeLine,
+  RiChatSmile2Line,
+  RiFileTextLine,
+  RiSparklingLine,
+  RiLoader4Line,
+  RiAlertLine,
+  RiErrorWarningLine,
+  RiPlayCircleLine,
+  RiArrowLeftLine,
+  RiHashtag,
+} from "react-icons/ri";
+import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
+
 import { useRouter } from "next/navigation";
 import { meetingApi } from "@/lib/api/meeting";
 import { getMeetingStatus } from "@/lib/status-utils";
@@ -38,16 +39,10 @@ export function MeetingLibrary({ session }: { session: any }) {
     let timeoutId: NodeJS.Timeout;
 
     const fetchStatus = () => {
-      // Find the active meeting
       const activeMeeting = recordings.find((r: any) => {
-        // If recording failed or timed out, it's terminal
         if (["FAILED", "TIMEOUT"].includes(r.recordingStatus)) return false;
-
-        // If recording is active, we must poll
         if (["PENDING", "ASKING_TO_JOIN", "JOINED"].includes(r.recordingStatus))
           return true;
-
-        // If recording is completed, only poll if processing is not terminal
         if (r.recordingStatus === "COMPLETED") {
           return (
             ["PENDING", "IN_PROGRESS"].includes(r.transcriptionStatus) ||
@@ -55,7 +50,6 @@ export function MeetingLibrary({ session }: { session: any }) {
             ["PENDING", "IN_PROGRESS"].includes(r.tagsStatus)
           );
         }
-
         return false;
       });
 
@@ -69,16 +63,16 @@ export function MeetingLibrary({ session }: { session: any }) {
               prev.map((r) =>
                 r.id === activeMeeting.id
                   ? {
-                    ...r,
-                    recordingStatus: statusData.recordingStatus,
-                    transcriptionStatus: statusData.transcriptionStatus,
-                    summaryStatus: statusData.summaryStatus,
-                    tagsStatus: statusData.tagsStatus,
-                    tags: statusData.tags,
-                    recordingError: statusData.recordingError,
-                    transcriptOrSummaryError:
-                      statusData.transcriptOrSummaryError,
-                  }
+                      ...r,
+                      recordingStatus: statusData.recordingStatus,
+                      transcriptionStatus: statusData.transcriptionStatus,
+                      summaryStatus: statusData.summaryStatus,
+                      tagsStatus: statusData.tagsStatus,
+                      tags: statusData.tags,
+                      recordingError: statusData.recordingError,
+                      transcriptOrSummaryError:
+                        statusData.transcriptOrSummaryError,
+                    }
                   : r,
               ),
             );
@@ -99,7 +93,6 @@ export function MeetingLibrary({ session }: { session: any }) {
             if (isStillActive) {
               timeoutId = setTimeout(fetchStatus, 5000);
             } else {
-              // Refresh full list once finished
               meetingApi.getMeetings(session.accessToken).then((data) => {
                 if (isMounted) setRecordings(data);
               });
@@ -107,7 +100,6 @@ export function MeetingLibrary({ session }: { session: any }) {
           })
           .catch(console.error);
       } else {
-        // Fallback or initial fetch
         meetingApi
           .getMeetings(session.accessToken)
           .then((data) => {
@@ -176,14 +168,11 @@ export function MeetingLibrary({ session }: { session: any }) {
     setChatLoadingId(recordingId);
 
     try {
-      // Check for existing chat sessions
       const chats = await chatApi.getChats(session.accessToken, recordingId);
 
       if (chats && chats.length > 0) {
-        // Resume the latest chat
         setActiveChatId(chats[0].id);
       } else {
-        // Start a new chat
         const newChat = await chatApi.startChat(
           recordingId,
           session.accessToken,
@@ -192,138 +181,178 @@ export function MeetingLibrary({ session }: { session: any }) {
       }
     } catch (error) {
       console.error("Failed to open chat:", error);
-      // Ideally show a toast or error message here
     } finally {
       setChatLoadingId(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-primary-500/30 relative flex flex-col">
-      {/* Background Ambience */}
+    <div className="min-h-screen bg-secondary-100 text-text-900 font-sans selection:bg-accent-500/20 relative flex flex-col">
+      {/* Subtle dot grid background */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.025]"
+        style={{
+          backgroundImage: "radial-gradient(circle, #111 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      {/* Ambient blurs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-primary-200/20 rounded-full blur-[140px] animate-pulse duration-15000" />
-        <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-secondary-300/30 rounded-full blur-[120px]" />
-        <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-primary-100/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-accent-200/8 rounded-full blur-[160px]" />
+        <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-violet-200/8 rounded-full blur-[140px]" />
       </div>
 
-      {/* Library Header */}
-      <header className="h-24 px-6 lg:px-12 flex items-center justify-between sticky top-0 bg-secondary-100/80 backdrop-blur-md z-30 border-b border-text-900/5">
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div
-            className="flex items-center gap-4 cursor-pointer group"
+      {/* ─── Header ─── */}
+      <header className="sticky top-0 z-30 bg-secondary-100/80 backdrop-blur-2xl border-b border-text-200/30">
+        <div className="max-w-6xl mx-auto w-full px-6 lg:px-8 h-16 flex items-center justify-between">
+          <button
             onClick={() => router.push("/")}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:rotate-6 transition-transform">
-              <RiGhostSmileLine className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tight text-text-900 leading-none">
-                Shadow Bot
-              </span>
-              <span className="text-[10px] font-bold text-text-400 uppercase tracking-widest mt-1">
-                Library
-              </span>
-            </div>
-          </div>
+            <span
+              className="text-xl tracking-tight text-text-900"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
+              Shadow
+            </span>
+            <span className="text-xl font-semibold tracking-tight text-text-500">
+              Bot
+            </span>
+          </button>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            {/* AI Chat Button */}
             <button
               onClick={() => router.push("/chat")}
-              className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 hover:border-primary-300 transition-all active:scale-95 shadow-sm"
+              className="hidden md:block btn-animated-border group"
             >
-              <Sparkles className="w-4 h-4" />
-              AI Chat
+              <div className="spin-gradient" />
+              <span className="relative z-10 block px-4 py-2 rounded-full bg-secondary-100/90 backdrop-blur-xl">
+                <span className="flex items-center gap-2 font-semibold text-sm text-text-600 group-hover:text-text-900 transition-colors duration-300">
+                  <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                  AI Chat
+                </span>
+              </span>
             </button>
 
+            {/* Join Meeting Button */}
             <button
               onClick={() => router.push("/")}
-              className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 hover:border-primary-300 transition-all active:scale-95 shadow-sm"
+              className="group relative hidden md:flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white bg-text-900 hover:bg-text-800 transition-all overflow-hidden active:scale-[0.97] shadow-xl shadow-text-900/10"
             >
-              <Video className="w-4 h-4" />
-              Join New Meeting
+              {/* Shimmer sweep overlay */}
+              <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                    animation: "shimmer-slide 3s ease-in-out infinite",
+                  }}
+                />
+              </span>
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+              <span className="relative z-10 flex items-center gap-2">
+                <RiVideoOnLine className="w-4 h-4" />
+                Join Meeting
+              </span>
             </button>
 
-            <div className="h-8 w-px bg-text-900/10 mx-2" />
-
+            <div className="h-5 w-px bg-text-200/40 mx-1" />
             <UserProfileBadge user={session?.user} />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 lg:p-12 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-text-400 mb-2">
-              <History className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">
-                Recordings
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black text-text-900 tracking-tight">
-              Meeting Library
+      {/* ─── Main Content ─── */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 lg:px-8 py-10 relative z-10">
+        {/* Page Title + Search */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="space-y-1">
+            <h1
+              className="text-3xl md:text-4xl text-text-900 tracking-tight"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
+              Your Meetings
             </h1>
-            <p className="text-text-500 font-medium max-w-lg text-lg">
-              Search your recordings, replay key moments, and turn hours of
-              conversation into instant answers.
+            <p className="text-text-500 font-normal text-base">
+              Recordings, transcripts, and AI-generated summaries.
             </p>
           </div>
 
-          <div className="relative group min-w-[320px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-300 group-focus-within:text-primary-600 transition-colors z-10 pointer-events-none" />
+          <div className="relative group min-w-[280px]">
+            <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-300 group-focus-within:text-text-600 transition-colors z-10 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by ID or date..."
-              className="w-full pl-10 pr-4 py-4 bg-white/50 backdrop-blur-md border border-text-900/10 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-300 shadow-sm transition-all text-sm font-bold text-text-900 placeholder:text-text-300/70"
+              placeholder="Search meetings..."
+              className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md border border-text-200/50 rounded-xl outline-none focus:ring-4 focus:ring-accent-500/5 focus:border-accent-400/30 shadow-sm transition-all text-sm font-medium text-text-900 placeholder:text-text-300"
             />
           </div>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-            <p className="text-sm font-bold text-text-400">
-              Loading library...
+            <RiLoader4Line className="w-7 h-7 text-text-300 animate-spin" />
+            <p className="text-sm font-medium text-text-400">
+              Loading meetings…
             </p>
           </div>
         ) : recordings.length === 0 ? (
-          <div className="text-center py-32 bg-white/40 backdrop-blur-xl rounded-[40px] border border-white/40 shadow-2xl shadow-text-900/5">
-            <div className="w-20 h-20 bg-secondary-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner border border-white/50">
-              <Video className="w-10 h-10 text-primary-300" />
+          <div className="text-center py-28 bg-white/40 backdrop-blur-xl rounded-3xl border border-text-200/30">
+            <div className="w-16 h-16 bg-secondary-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <RiVideoOnLine className="w-8 h-8 text-text-300" />
             </div>
-            <h3 className="text-2xl font-black text-text-900 tracking-tight">
-              Quiet in the archives
+            <h3
+              className="text-2xl text-text-900 tracking-tight"
+              style={{ fontFamily: "var(--font-dm-serif), Georgia, serif" }}
+            >
+              No meetings yet
             </h3>
-            <p className="text-text-500 mt-3 mb-10 max-w-sm mx-auto font-medium text-lg leading-relaxed">
-              You haven't recorded any meetings yet. Start a session to see your
-              history appear here.
+            <p className="text-text-500 mt-2 mb-8 max-w-sm mx-auto font-normal">
+              Record your first meeting to start building your library.
             </p>
             <button
               onClick={() => router.push("/")}
-              className="px-10 py-4 bg-primary-600 text-white rounded-2xl font-black hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/20 active:scale-95 flex items-center gap-3 mx-auto"
+              className="group relative overflow-hidden bg-text-900 text-white px-6 py-3 rounded-full font-semibold transition-all shadow-xl shadow-text-900/10 active:scale-95 flex items-center gap-2.5 mx-auto text-sm"
             >
-              <Sparkles className="w-5 h-5" />
-              <span>Record First Meeting</span>
+              {/* Shimmer sweep overlay */}
+              <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 55%, transparent 60%)",
+                    animation: "shimmer-slide 3s ease-in-out infinite",
+                  }}
+                />
+              </span>
+              {/* Accent underline glow */}
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-accent-400/60 to-transparent" />
+              <span className="relative z-10 flex items-center gap-2.5">
+                <RiSparklingLine className="w-4 h-4" />
+                Record First Meeting
+              </span>
             </button>
           </div>
         ) : (
-          <div className="grid gap-6">
-            {recordings.map((rec) => (
+          <div className="space-y-3">
+            {recordings.map((rec, index) => (
               <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: index * 0.04,
+                  duration: 0.4,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 key={rec.id}
-                className="group relative"
+                className="group"
               >
-                {/* Glow Background on Hover */}
-                <div className="absolute -inset-0.5 bg-linear-to-r from-primary-500/20 via-secondary-400/20 to-primary-500/20 rounded-[28px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="relative bg-white/60 backdrop-blur-2xl border border-white/60 rounded-[24px] p-8 shadow-[0_8px_32px_-12px_rgba(61,40,23,0.08)] transition-all duration-300">
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                    {/* Left: Recording Status & Info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-6 flex-1">
+                <div className="bg-white/60 backdrop-blur-xl border border-text-200/30 rounded-2xl p-5 hover:bg-white/80 hover:border-text-200/50 hover:shadow-lg hover:shadow-text-900/3 transition-all duration-300">
+                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    {/* Left: Info */}
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
                       {(() => {
                         const statusConfig = getMeetingStatus(
                           rec.recordingStatus,
@@ -331,55 +360,52 @@ export function MeetingLibrary({ session }: { session: any }) {
 
                         return (
                           <>
-                            {/* Play Button / Status Indicator */}
+                            {/* Status Icon */}
                             <div className="relative shrink-0">
                               {rec.recordingStatus === "COMPLETED" &&
-                                rec.fileName ? (
+                              rec.fileName ? (
                                 <a
                                   href={`${process.env.NEXT_PUBLIC_API_URL}/recordings/${rec.fileName}`}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="group/icon block relative"
+                                  className="group/icon block"
                                 >
-                                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-primary-50 text-primary-600 border border-primary-200 shadow-inner group-hover/icon:scale-105 group-hover/icon:shadow-lg group-hover/icon:shadow-primary-500/20 group-hover/icon:border-primary-300 transition-all duration-300 cursor-pointer">
-                                    <div className="relative">
-                                      <div className="absolute inset-0 bg-primary-400 rounded-full opacity-0 group-hover/icon:opacity-20 animate-ping" />
-                                      <Play className="w-8 h-8 fill-current relative z-10 ml-1" />
-                                    </div>
+                                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-secondary-200/80 text-text-500 group-hover/icon:bg-accent-50 group-hover/icon:text-accent-600 transition-all duration-200">
+                                    <RiPlayCircleLine className="w-5 h-5" />
                                   </div>
                                 </a>
                               ) : (
                                 <div
-                                  className={`w-16 h-16 rounded-2xl flex items-center justify-center border shadow-inner ${statusConfig.bgClass} ${statusConfig.textClass} ${statusConfig.borderClass}`}
+                                  className={`w-11 h-11 rounded-xl flex items-center justify-center border ${statusConfig.bgClass} ${statusConfig.textClass} ${statusConfig.borderClass}`}
                                 >
                                   <statusConfig.icon
-                                    className={`w-8 h-8 ${statusConfig.animationClass || ""}`}
+                                    className={`w-5 h-5 ${statusConfig.animationClass || ""}`}
                                   />
                                 </div>
                               )}
                             </div>
 
-                            <div className="space-y-2 flex-1">
-                              <div className="flex flex-wrap items-center gap-4">
-                                <h3 className="text-xl font-black text-text-900 tracking-tight">
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2.5">
+                                <h3 className="text-[15px] font-semibold text-text-900 tracking-tight truncate">
                                   {rec.link ? (
-                                    <span className="truncate max-w-[300px] block">
+                                    <span className="truncate max-w-[280px] block">
                                       {rec.link.replace("https://", "")}
                                     </span>
                                   ) : (
-                                    `Direct Meeting Session`
+                                    `Direct Meeting`
                                   )}
                                 </h3>
                                 <span
-                                  className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${statusConfig.borderClass} ${statusConfig.bgClass} ${statusConfig.textClass} shadow-sm`}
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusConfig.borderClass} ${statusConfig.bgClass} ${statusConfig.textClass}`}
                                 >
                                   {statusConfig.label}
                                 </span>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-bold text-text-400">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="w-3.5 h-3.5 opacity-60" />
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-400">
+                                <div className="flex items-center gap-1.5">
+                                  <RiTimeLine className="w-3 h-3 opacity-60" />
                                   <span>
                                     {new Date(rec.createdAt).toLocaleDateString(
                                       undefined,
@@ -389,7 +415,7 @@ export function MeetingLibrary({ session }: { session: any }) {
                                         year: "numeric",
                                       },
                                     )}
-                                    <span className="mx-1.5 opacity-30">·</span>
+                                    <span className="mx-1 opacity-30">·</span>
                                     {new Date(rec.createdAt).toLocaleTimeString(
                                       undefined,
                                       {
@@ -401,40 +427,39 @@ export function MeetingLibrary({ session }: { session: any }) {
                                 </div>
 
                                 {rec.id && (
-                                  <div className="flex items-center gap-2 opacity-60">
-                                    <div className="h-4 w-px bg-text-200" />
-                                    <span className="font-mono text-[10px] tracking-wider uppercase">
-                                      UID: {rec.id.substring(0, 12)}...
-                                    </span>
-                                  </div>
+                                  <span className="font-mono text-[10px] tracking-wider opacity-40">
+                                    {rec.id.substring(0, 10)}
+                                  </span>
                                 )}
                               </div>
 
-                              {/* AI Tags Display */}
+                              {/* Tags */}
                               {rec.tags && rec.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 pt-1 transition-all duration-500">
+                                <div className="flex flex-wrap gap-1.5 pt-0.5">
                                   {rec.tags.map((tag: string) => (
                                     <span
                                       key={tag}
-                                      className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/40 text-text-600 border border-text-100 hover:border-primary-200 hover:text-primary-600 hover:bg-white/80 transition-all cursor-default shadow-xs"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary-200/60 text-text-500 hover:text-accent-600 hover:bg-accent-50 transition-colors cursor-default"
                                     >
-                                      # {tag}
+                                      <RiHashtag className="w-2.5 h-2.5" />
+                                      {tag}
                                     </span>
                                   ))}
                                 </div>
                               )}
 
+                              {/* Errors */}
                               {rec.recordingError && (
-                                <div className="flex items-center gap-2 text-red-700/70 text-[11px] font-bold bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-red-500/10 w-fit mt-3 shadow-sm">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-red-500/60" />
+                                <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-medium bg-red-50/70 px-2.5 py-1 rounded-lg border border-red-200/40 w-fit">
+                                  <RiAlertLine className="w-3 h-3 text-red-400" />
                                   <span>
                                     {cleanupErrorMessage(rec.recordingError)}
                                   </span>
                                 </div>
                               )}
                               {rec.transcriptOrSummaryError && (
-                                <div className="flex items-center gap-2 text-amber-700/70 text-[11px] font-bold bg-white/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-500/10 w-fit mt-3 shadow-sm">
-                                  <AlertCircle className="w-3.5 h-3.5 text-amber-500/60" />
+                                <div className="flex items-center gap-1.5 text-amber-700 text-[11px] font-medium bg-amber-50/70 px-2.5 py-1 rounded-lg border border-amber-200/40 w-fit">
+                                  <RiErrorWarningLine className="w-3 h-3 text-amber-400" />
                                   <span>
                                     {cleanupErrorMessage(
                                       rec.transcriptOrSummaryError,
@@ -448,8 +473,8 @@ export function MeetingLibrary({ session }: { session: any }) {
                       })()}
                     </div>
 
-                    {/* Right: Actions Buttons */}
-                    <div className="flex flex-wrap items-center gap-3">
+                    {/* Right: Actions — compact pills */}
+                    <div className="flex flex-wrap items-center gap-2">
                       {rec.recordingStatus === "COMPLETED" && (
                         <>
                           <button
@@ -458,71 +483,69 @@ export function MeetingLibrary({ session }: { session: any }) {
                               chatLoadingId === rec.id
                             }
                             onClick={() => handleChatOpen(rec.id)}
-                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-text-100 disabled:hover:text-text-900 disabled:hover:shadow-none"
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 border border-text-200/50 text-text-700 font-medium text-xs hover:border-accent-300 hover:text-accent-600 hover:shadow-sm transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-text-200/50 disabled:hover:text-text-700"
                           >
                             {chatLoadingId === rec.id ? (
-                              <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
+                              <RiLoader4Line className="w-3.5 h-3.5 text-accent-500 animate-spin" />
                             ) : (
-                              <MessageSquare className="w-4 h-4 text-primary-500" />
+                              <RiChatSmile2Line className="w-3.5 h-3.5 text-accent-500" />
                             )}
                             <span>
-                              {chatLoadingId === rec.id
-                                ? "Opening..."
-                                : "Ask"}
+                              {chatLoadingId === rec.id ? "Opening…" : "Ask AI"}
                             </span>
                           </button>
 
-                          {/* Summary Button */}
+                          {/* Summary */}
                           {rec.summaryStatus === "COMPLETED" ? (
                             <button
                               onClick={() => setActiveSummaryId(rec.id)}
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 border border-text-200/50 text-text-700 font-medium text-xs hover:border-accent-300 hover:text-accent-600 hover:shadow-sm transition-all active:scale-[0.97]"
                             >
-                              <Sparkles className="w-4 h-4 text-primary-500" />
+                              <RiSparklingLine className="w-3.5 h-3.5 text-accent-500" />
                               <span>Summary</span>
                             </button>
                           ) : rec.summaryStatus === "FAILED" ? (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/40 backdrop-blur-md border border-red-500/10 text-red-500/60 font-bold text-sm cursor-not-allowed opacity-80"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50/50 border border-red-200/40 text-red-400 font-medium text-xs cursor-not-allowed"
                             >
-                              <AlertTriangle className="w-4 h-4" />
-                              <span>Summary Failed</span>
+                              <RiAlertLine className="w-3.5 h-3.5" />
+                              <span>Failed</span>
                             </button>
                           ) : (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary-50 border border-secondary-200 text-text-400 font-bold text-sm cursor-not-allowed"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-secondary-200/50 border border-text-200/40 text-text-400 font-medium text-xs cursor-not-allowed"
                             >
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                              <span>Generating Summary...</span>
+                              <RiLoader4Line className="w-3 h-3 animate-spin" />
+                              <span>Generating…</span>
                             </button>
                           )}
 
-                          {/* Transcript Button */}
+                          {/* Transcript */}
                           {rec.transcriptionStatus === "COMPLETED" ? (
                             <button
                               onClick={() => setActiveTranscriptId(rec.id)}
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-text-100 text-text-900 font-bold text-sm hover:border-primary-300 hover:text-primary-700 hover:shadow-lg hover:shadow-primary-600/5 transition-all active:scale-95"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 border border-text-200/50 text-text-700 font-medium text-xs hover:border-accent-300 hover:text-accent-600 hover:shadow-sm transition-all active:scale-[0.97]"
                             >
-                              <FileText className="w-4 h-4 text-primary-500" />
+                              <RiFileTextLine className="w-3.5 h-3.5 text-accent-500" />
                               <span>Transcript</span>
                             </button>
                           ) : rec.transcriptionStatus === "FAILED" ? (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/40 backdrop-blur-md border border-red-500/10 text-red-500/60 font-bold text-sm cursor-not-allowed opacity-80"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50/50 border border-red-200/40 text-red-400 font-medium text-xs cursor-not-allowed"
                             >
-                              <AlertTriangle className="w-4 h-4" />
-                              <span>Transcript Failed</span>
+                              <RiAlertLine className="w-3.5 h-3.5" />
+                              <span>Failed</span>
                             </button>
                           ) : (
                             <button
                               disabled
-                              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary-50 border border-secondary-200 text-text-400 font-bold text-sm cursor-not-allowed"
+                              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-secondary-200/50 border border-text-200/40 text-text-400 font-medium text-xs cursor-not-allowed"
                             >
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                              <span>Transcribing...</span>
+                              <RiLoader4Line className="w-3 h-3 animate-spin" />
+                              <span>Transcribing…</span>
                             </button>
                           )}
                         </>
@@ -555,10 +578,7 @@ export function MeetingLibrary({ session }: { session: any }) {
         isOpen={!!activeChatId}
         onClose={() => setActiveChatId(null)}
         session={session}
-        title={
-          recordings.find((r) => r.id === activeChatId)?.title ||
-          "Ask AI"
-        }
+        title={recordings.find((r) => r.id === activeChatId)?.title || "Ask AI"}
       />
     </div>
   );

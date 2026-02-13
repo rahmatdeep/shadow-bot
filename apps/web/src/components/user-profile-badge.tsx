@@ -1,74 +1,105 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RiLogoutBoxRLine, RiUserLine, RiSettings4Line } from "react-icons/ri";
 
 interface UserProfileBadgeProps {
   user?: {
     name?: string | null;
     email?: string | null;
     image?: string | null;
-  } | null;
+  };
+  position?: "top" | "bottom";
 }
 
-export function UserProfileBadge({ user }: UserProfileBadgeProps) {
-  const [isHovered, setIsHovered] = useState(false);
+export function UserProfileBadge({
+  user,
+  position = "bottom",
+}: UserProfileBadgeProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!user) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative z-50"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <motion.div
-        layout
-        className="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm hover:shadow-md hover:bg-white/80 transition-all duration-300 cursor-default group"
+    <div className="relative" ref={containerRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-text-200/50 hover:bg-white hover:border-text-300 transition-all shadow-sm cursor-pointer group active:scale-95"
       >
-        <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden border border-primary-200 text-primary-600 shrink-0">
-          {user?.image ? (
-            <Image
-              src={user?.image}
-              alt={user?.name || "User"}
-              width={36}
-              height={36}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <User className="w-5 h-5" />
-          )}
-        </div>
+        {user.image ? (
+          <img
+            src={user.image}
+            alt={user.name || "User"}
+            className="w-7 h-7 rounded-full object-cover ring-2 ring-text-100 group-hover:ring-text-200 transition-all"
+          />
+        ) : (
+          <div className="w-7 h-7 rounded-full bg-text-100 flex items-center justify-center text-text-500 text-xs font-semibold group-hover:bg-text-200 transition-all">
+            {user.name?.charAt(0) || "?"}
+          </div>
+        )}
+        <span className="text-sm font-semibold text-text-700 hidden sm:inline max-w-[120px] truncate">
+          {user.name?.split(" ")[0] || "User"}
+        </span>
+      </button>
 
-        <div className="flex flex-col">
-          <span className="text-sm font-bold text-text-900 leading-tight">
-            {user?.name?.split(" ")[0] || "User"}
-          </span>
-          {user?.email && (
-            <span className="text-[10px] font-medium text-text-400 leading-none truncate max-w-[100px]">
-              {user?.email}
-            </span>
-          )}
-        </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: position === "bottom" ? 8 : -8,
+              scale: 0.95,
+            }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{
+              opacity: 0,
+              y: position === "bottom" ? 8 : -8,
+              scale: 0.95,
+            }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className={`absolute right-0 ${
+              position === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+            } w-64 bg-white/95 backdrop-blur-2xl rounded-3xl border border-text-200/60 shadow-2xl shadow-text-900/10 overflow-hidden z-100`}
+          >
+            {/* Header info */}
+            <div className="px-5 py-4 border-b border-text-100/50 bg-secondary-50/30">
+              <p className="text-sm font-bold text-text-900 truncate">
+                {user.name}
+              </p>
+              <p className="text-[11px] font-medium text-text-400 truncate mt-0.5 tracking-tight">
+                {user.email}
+              </p>
+            </div>
 
-        <AnimatePresence>
-          {isHovered && (
-            <motion.button
-              initial={{ width: 0, opacity: 0, marginLeft: 0 }}
-              animate={{ width: 28, opacity: 1, marginLeft: 8 }}
-              exit={{ width: 0, opacity: 0, marginLeft: 0 }}
-              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              onClick={() => signOut()}
-              className="flex items-center justify-center rounded-full text-text-400 hover:text-red-600 hover:bg-red-50 transition-colors overflow-hidden"
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
+            <div className="p-1.5">
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all group active:scale-[0.98]"
+              >
+                <RiLogoutBoxRLine className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
+                Sign Out
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
